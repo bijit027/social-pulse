@@ -1,67 +1,107 @@
 <template>
   <div class="settings">
-    <header class="settings-header">
-      <router-link to="/" class="back-link">← Back to Dashboard</router-link>
-      <h1>Settings</h1>
-    </header>
-
-    <div v-if="loading" class="loading">Loading...</div>
-
-    <div v-else-if="user" class="settings-content">
-      <div class="profile-section">
-        <h2>Profile</h2>
-        <div class="profile-info">
-          <div class="info-item">
-            <label>Name</label>
-            <p>{{ user.name }}</p>
-          </div>
-          <div class="info-item">
-            <label>Email</label>
-            <p>{{ user.email }}</p>
-          </div>
+    <el-container class="settings-container">
+      <el-header class="settings-header">
+        <div class="header-left">
+          <router-link to="/">
+            <el-button :icon="ArrowLeft">Back to Dashboard</el-button>
+          </router-link>
+          <h1>Settings</h1>
         </div>
-      </div>
+      </el-header>
 
-      <div class="plan-section">
-        <h2>Plan</h2>
-        <div class="plan-info">
-          <div class="info-item">
-            <label>Current Plan</label>
-            <p class="plan-badge">{{ user.plan.toUpperCase() }}</p>
-          </div>
-          <div class="info-item" v-if="user.plan === 'trial'">
-            <label>Trial Ends</label>
-            <p>{{ formatDate(user.trial_ends_at) }}</p>
-          </div>
-          <div class="info-item">
-            <label>Status</label>
-            <p>{{ user.is_on_trial ? 'On Trial' : (user.is_paid ? 'Paid' : 'Free') }}</p>
-          </div>
+      <el-main class="settings-main">
+        <div v-if="loading" class="loading-container">
+          <el-skeleton :rows="5" animated />
         </div>
-      </div>
 
-      <div class="limits-section">
-        <h2>Usage Limits</h2>
-        <div class="limits-info">
-          <div class="info-item">
-            <label>Websites</label>
-            <p>{{ websitesCount }} / {{ getWebsiteLimit() }}</p>
-          </div>
+        <div v-else-if="user" class="settings-content">
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-card class="profile-card" shadow="hover">
+                <template #header>
+                  <div class="card-header">
+                    <el-icon :size="20" color="#409eff"><User /></el-icon>
+                    <span>Profile</span>
+                  </div>
+                </template>
+                <el-descriptions :column="1" border>
+                  <el-descriptions-item label="Name">{{ user.name }}</el-descriptions-item>
+                  <el-descriptions-item label="Email">{{ user.email }}</el-descriptions-item>
+                </el-descriptions>
+              </el-card>
+            </el-col>
+
+            <el-col :span="24">
+              <el-card class="plan-card" shadow="hover">
+                <template #header>
+                  <div class="card-header">
+                    <el-icon :size="20" color="#67c23a"><CreditCard /></el-icon>
+                    <span>Plan</span>
+                  </div>
+                </template>
+                <el-descriptions :column="1" border>
+                  <el-descriptions-item label="Current Plan">
+                    <el-tag type="primary">{{ user.plan.toUpperCase() }}</el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item v-if="user.plan === 'trial'" label="Trial Ends">
+                    {{ formatDate(user.trial_ends_at) }}
+                  </el-descriptions-item>
+                  <el-descriptions-item label="Status">
+                    <el-tag :type="user.is_on_trial ? 'warning' : (user.is_paid ? 'success' : 'info')">
+                      {{ user.is_on_trial ? 'On Trial' : (user.is_paid ? 'Paid' : 'Free') }}
+                    </el-tag>
+                  </el-descriptions-item>
+                </el-descriptions>
+              </el-card>
+            </el-col>
+
+            <el-col :span="24">
+              <el-card class="limits-card" shadow="hover">
+                <template #header>
+                  <div class="card-header">
+                    <el-icon :size="20" color="#e6a23c"><DataAnalysis /></el-icon>
+                    <span>Usage Limits</span>
+                  </div>
+                </template>
+                <el-descriptions :column="1" border>
+                  <el-descriptions-item label="Websites">
+                    <el-progress :percentage="getUsagePercentage()" :stroke-width="20" />
+                    <div style="margin-top: 0.5rem; color: var(--el-text-color-secondary); font-size: 0.875rem;">
+                      {{ websitesCount }} / {{ getWebsiteLimit() }} websites
+                    </div>
+                  </el-descriptions-item>
+                </el-descriptions>
+              </el-card>
+            </el-col>
+
+            <el-col :span="24">
+              <el-card class="actions-card" shadow="hover">
+                <el-button type="danger" :icon="SwitchButton" @click="handleLogout" style="width: 100%">
+                  Logout
+                </el-button>
+              </el-card>
+            </el-col>
+          </el-row>
         </div>
-      </div>
-
-      <div class="actions-section">
-        <button @click="handleLogout" class="logout-btn">Logout</button>
-      </div>
-    </div>
+      </el-main>
+    </el-container>
   </div>
 </template>
 
 <script>
 import api from '../services/api'
+import { ArrowLeft, User, CreditCard, DataAnalysis, SwitchButton } from '@element-plus/icons-vue'
 
 export default {
   name: 'Settings',
+  components: {
+    ArrowLeft,
+    User,
+    CreditCard,
+    DataAnalysis,
+    SwitchButton
+  },
   data() {
     return {
       user: null,
@@ -96,6 +136,11 @@ export default {
       const limits = { trial: 1, starter: 1, pro: 5 }
       return limits[this.user?.plan] || 0
     },
+    getUsagePercentage() {
+      const limit = this.getWebsiteLimit()
+      if (limit === 0) return 0
+      return Math.min((this.websitesCount / limit) * 100, 100)
+    },
     formatDate(date) {
       if (!date) return 'N/A'
       return new Date(date).toLocaleDateString()
@@ -111,105 +156,79 @@ export default {
 <style scoped>
 .settings {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
+}
+
+.settings-container {
+  min-height: 100vh;
 }
 
 .settings-header {
   background: white;
-  padding: 1.5rem 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 1rem 2rem;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--el-border-color-light);
 }
 
-.back-link {
-  color: #667eea;
-  text-decoration: none;
-  display: inline-block;
-  margin-bottom: 1rem;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 .settings-header h1 {
-  color: #333;
+  color: var(--el-text-color-primary);
   margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
-.settings-content {
+.settings-main {
   padding: 2rem;
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
-.loading {
-  text-align: center;
+.loading-container {
   padding: 2rem;
-  color: #666;
 }
 
-.profile-section,
-.plan-section,
-.limits-section {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
-}
-
-.profile-section h2,
-.plan-section h2,
-.limits-section h2 {
-  margin: 0 0 1.5rem 0;
-  color: #333;
-}
-
-.profile-info,
-.plan-info,
-.limits-info {
+.settings-content {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
 }
 
-.info-item label {
-  display: block;
-  color: #666;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
+.profile-card,
+.plan-card,
+.limits-card,
+.actions-card {
+  margin-bottom: 0;
 }
 
-.info-item p {
-  color: #333;
-  font-size: 1.125rem;
-  margin: 0;
-}
-
-.plan-badge {
-  display: inline-block;
-  padding: 0.5rem 1rem;
-  background: #667eea;
-  color: white;
-  border-radius: 12px;
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-weight: 600;
+  color: var(--el-text-color-primary);
 }
 
-.actions-section {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.logout-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.logout-btn:hover {
-  background: #c0392b;
+@media (max-width: 768px) {
+  .settings-header {
+    padding: 1rem;
+  }
+  
+  .settings-main {
+    padding: 1rem;
+  }
+  
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 }
 </style>

@@ -1,73 +1,105 @@
 <template>
   <div class="dashboard">
-    <header class="dashboard-header">
-      <h1>SocialPulse Dashboard</h1>
-      <div class="header-actions">
-        <router-link to="/settings" class="settings-link">Settings</router-link>
-        <button @click="handleLogout" class="logout-btn">Logout</button>
-      </div>
-    </header>
+    <el-container class="dashboard-container">
+      <el-header class="dashboard-header">
+        <div class="header-left">
+          <div class="logo">
+            <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#667eea" d="M14.747 9.125c.527-1.426 1.736-2.573 3.317-2.573c1.643 0 2.792 1.085 3.318 2.573l6.077 16.867c.186.496.248.931.248 1.147c0 1.209-.992 2.046-2.139 2.046c-1.303 0-1.954-.682-2.264-1.611l-.931-2.915h-8.62l-.93 2.884c-.31.961-.961 1.642-2.232 1.642c-1.24 0-2.294-.93-2.294-2.17c0-.496.155-.868.217-1.023l6.233-16.867zm.34 11.256h5.891l-2.883-8.992h-.062l-2.946 8.992z"/>
+            </svg>
+          </div>
+          <h1>SocialPulse</h1>
+        </div>
+        <div class="header-actions">
+          <router-link to="/settings">
+            <el-button :icon="Setting">Settings</el-button>
+          </router-link>
+          <el-button type="danger" :icon="SwitchButton" @click="handleLogout">Logout</el-button>
+        </div>
+      </el-header>
 
-    <div class="dashboard-content">
-      <div class="websites-section">
-        <div class="section-header">
-          <h2>Your Websites</h2>
-          <button @click="showAddModal = true" class="add-btn">+ Add Website</button>
+      <el-main class="dashboard-main">
+        <div class="hero-section">
+          <div class="hero-text">
+            <span class="eyebrow">Dashboard</span>
+            <h1 class="hero-title">Welcome back</h1>
+            <p class="hero-sub">Manage your websites and track social proof notifications</p>
+          </div>
+          <div class="hero-actions">
+            <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Website</el-button>
+          </div>
         </div>
 
-        <div v-if="loading" class="loading">Loading...</div>
+        <div v-if="loading" class="loading-container">
+          <el-skeleton :rows="3" animated />
+        </div>
 
         <div v-else-if="websites.length === 0" class="empty-state">
-          <p>No websites yet. Add your first website to get started!</p>
+          <el-empty description="No websites yet. Add your first website to get started!">
+            <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Website</el-button>
+          </el-empty>
         </div>
 
-        <div v-else class="websites-list">
-          <div v-for="website in websites" :key="website.id" class="website-card">
-            <div class="website-info">
-              <h3>{{ website.name }}</h3>
-              <p>{{ website.domain }}</p>
-              <span class="badge">{{ website.notifications_count }} notifications</span>
+        <div v-else class="websites-grid">
+          <el-card v-for="website in websites" :key="website.id" class="website-card" shadow="hover">
+            <template #header>
+              <div class="card-header">
+                <div class="card-header-left">
+                  <el-icon class="website-icon" :size="24" color="#667eea"><Monitor /></el-icon>
+                  <h3>{{ website.name }}</h3>
+                </div>
+                <el-tag type="primary">{{ website.notifications_count }} notifications</el-tag>
+              </div>
+            </template>
+            <div class="card-body">
+              <p class="domain">{{ website.domain }}</p>
+              <div class="card-actions">
+                <router-link :to="`/websites/${website.id}`">
+                  <el-button type="primary" :icon="View">View</el-button>
+                </router-link>
+                <el-button type="danger" :icon="Delete" @click="deleteWebsite(website.id)">Delete</el-button>
+              </div>
             </div>
-            <div class="website-actions">
-              <router-link :to="`/websites/${website.id}`" class="view-btn">View</router-link>
-              <button @click="deleteWebsite(website.id)" class="delete-btn">Delete</button>
-            </div>
-          </div>
+          </el-card>
         </div>
-      </div>
-    </div>
+      </el-main>
+    </el-container>
 
-    <!-- Add Website Modal -->
-    <div v-if="showAddModal" class="modal-overlay" @click.self="showAddModal = false">
-      <div class="modal">
-        <h2>Add Website</h2>
-        <form @submit.prevent="handleAddWebsite">
-          <div class="form-group">
-            <label>Website Name</label>
-            <input v-model="newWebsite.name" type="text" required />
-          </div>
-          <div class="form-group">
-            <label>Domain</label>
-            <input v-model="newWebsite.domain" type="text" required placeholder="example.com" />
-          </div>
-          <div class="modal-actions">
-            <button type="button" @click="showAddModal = false" class="cancel-btn">Cancel</button>
-            <button type="submit" :disabled="adding" class="submit-btn">
-              {{ adding ? 'Adding...' : 'Add' }}
-            </button>
-          </div>
-          <p v-if="addError" class="error">{{ addError }}</p>
-        </form>
-      </div>
-    </div>
+    <!-- Add Website Dialog -->
+    <el-dialog v-model="showAddModal" title="Add Website" width="500px">
+      <el-form @submit.prevent="handleAddWebsite" :model="newWebsite" label-position="top">
+        <el-form-item label="Website Name">
+          <el-input v-model="newWebsite.name" placeholder="My Website" required />
+        </el-form-item>
+        <el-form-item label="Domain">
+          <el-input v-model="newWebsite.domain" placeholder="example.com" required />
+        </el-form-item>
+        <el-alert v-if="addError" :title="addError" type="error" :closable="false" style="margin-bottom: 1rem" />
+      </el-form>
+      <template #footer>
+        <el-button @click="showAddModal = false">Cancel</el-button>
+        <el-button type="primary" :loading="adding" @click="handleAddWebsite">
+          {{ adding ? 'Adding...' : 'Add' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import api from '../services/api'
+import { Setting, SwitchButton, Plus, Monitor, View, Delete } from '@element-plus/icons-vue'
 
 export default {
   name: 'Dashboard',
+  components: {
+    Setting,
+    SwitchButton,
+    Plus,
+    Monitor,
+    View,
+    Delete
+  },
   data() {
     return {
       websites: [],
@@ -130,215 +162,184 @@ export default {
 <style scoped>
 .dashboard {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
+}
+
+.dashboard-container {
+  min-height: 100vh;
 }
 
 .dashboard-header {
   background: white;
-  padding: 1.5rem 2rem;
+  padding: 1rem 2rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--el-border-color-light);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+}
+
+.logo svg {
+  width: 100%;
+  height: 100%;
 }
 
 .dashboard-header h1 {
-  color: #333;
+  color: var(--el-text-color-primary);
   margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
 }
 
 .header-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   align-items: center;
 }
 
-.settings-link {
-  color: #667eea;
-  text-decoration: none;
-}
-
-.logout-btn {
-  padding: 0.5rem 1rem;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.dashboard-content {
+.dashboard-main {
   padding: 2rem;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-.section-header {
+.hero-section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
 }
 
-.section-header h2 {
-  color: #333;
+.hero-text {
+  flex: 1;
+}
+
+.eyebrow {
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.hero-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.hero-sub {
+  font-size: 1rem;
+  opacity: 0.9;
   margin: 0;
 }
 
-.add-btn {
-  padding: 0.5rem 1rem;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
-  color: #666;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem;
-  color: #666;
-}
-
-.websites-list {
-  display: grid;
+.hero-actions {
+  display: flex;
   gap: 1rem;
 }
 
+.loading-container {
+  padding: 2rem;
+}
+
+.websites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
 .website-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.website-card:hover {
+  transform: translateY(-2px);
+}
+
+.card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.website-info h3 {
-  margin: 0 0 0.5rem 0;
-  color: #333;
+.card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.website-info p {
-  margin: 0 0 0.5rem 0;
-  color: #666;
+.website-icon {
+  flex-shrink: 0;
 }
 
-.badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background: #667eea;
-  color: white;
-  border-radius: 12px;
+.card-header h3 {
+  margin: 0;
+  color: var(--el-text-color-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.domain {
+  margin: 0;
+  color: var(--el-text-color-secondary);
   font-size: 0.875rem;
 }
 
-.website-actions {
+.card-actions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  justify-content: flex-end;
 }
 
-.view-btn {
-  padding: 0.5rem 1rem;
-  background: #667eea;
-  color: white;
+.card-actions a {
   text-decoration: none;
-  border-radius: 6px;
 }
 
-.delete-btn {
-  padding: 0.5rem 1rem;
-  background: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.empty-state {
+  padding: 4rem 2rem;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 400px;
-}
-
-.modal h2 {
-  margin: 0 0 1.5rem 0;
-  color: #333;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: #555;
-}
-
-.form-group input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.cancel-btn {
-  flex: 1;
-  padding: 0.75rem;
-  background: #ccc;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.submit-btn {
-  flex: 1;
-  padding: 0.75rem;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.submit-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.error {
-  color: #e74c3c;
-  text-align: center;
-  margin-top: 1rem;
+@media (max-width: 768px) {
+  .hero-section {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .websites-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-header {
+    padding: 1rem;
+  }
+  
+  .dashboard-main {
+    padding: 1rem;
+  }
 }
 </style>
