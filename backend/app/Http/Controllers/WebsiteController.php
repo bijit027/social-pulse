@@ -27,6 +27,16 @@ class WebsiteController extends Controller
         return response()->json($website, 201);
     }
 
+    public function show(Website $website)
+    {
+        if ($website->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $website->load('notifications');
+        return response()->json($website);
+    }
+
     public function update(StoreWebsiteRequest $request, Website $website)
     {
         if ($website->user_id !== auth()->id()) {
