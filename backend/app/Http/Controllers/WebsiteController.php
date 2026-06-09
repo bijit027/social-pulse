@@ -67,4 +67,44 @@ class WebsiteController extends Controller
 
         return response()->json(['snippet' => $snippet]);
     }
+
+    public function analytics(Website $website)
+    {
+        if ($website->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        $notifications = $website->notifications()
+            ->withCount('displays')
+            ->with(['displays' => function($query) {
+                $query->latest('displayed_at')->limit(1);
+            }])
+            ->get()
+            ->map(function($notification) {
+                return [
+                    'id'             => $notification->id,
+                    'message'        => $notification->message,
+                    'type'           => $notification->type,
+                    'emoji'          => $notification->emoji,
+                    'is_active'      => $notification->is_active,
+                    'total_displays' => $notification->displays_count,
+                    'last_shown'     => $notification->displays->first()?->displayed_at,
+                ];
+            });
+
+        $totalDisplays = $website->notificationDisplays()->count();
+        $thisWeek = $website->notificationDisplays()
+            ->where('displayed_at', '>=', now()->subDays(7))
+            ->count();
+        $today = $website->notificationDisplays()
+            ->where('displayed_at', '>=', now()->startOfDay())
+            ->count();
+
+        return response()->json([
+            'total_displays'     => $totalDisplays,
+            'displays_this_week' => $thisWeek,
+            'displays_today'     => $today,
+            'notifications'      => $notifications,
+        ]);
+    }
 }

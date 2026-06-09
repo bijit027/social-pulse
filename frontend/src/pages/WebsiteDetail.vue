@@ -1,55 +1,113 @@
 <template>
   <div class="website-detail">
-    <header class="detail-header">
-      <router-link to="/" class="back-link">← Back to Dashboard</router-link>
-      <h1>{{ website?.name }}</h1>
-    </header>
+    <div class="page-container">
+      <!-- Section 1: Page Header -->
+      <header class="page-header">
+        <router-link to="/" class="back-link">← Back to Dashboard</router-link>
+        <h1>{{ website?.name }}</h1>
+        <p class="domain">{{ website?.domain }}</p>
+      </header>
 
-    <div v-if="loading" class="loading">Loading...</div>
-
-    <div v-else-if="website" class="detail-content">
-      <div class="snippet-section">
-        <h2>Embed Snippet</h2>
-        <p>Add this snippet to your website to show social proof notifications:</p>
-        <div class="snippet-box">
-          <code>{{ snippet }}</code>
-          <button @click="copySnippet" class="copy-btn">
-            {{ copied ? 'Copied!' : 'Copy' }}
-          </button>
-        </div>
+      <div v-if="loading" class="loading">
+        <div class="skeleton-header"></div>
+        <div class="skeleton-stats"></div>
+        <div class="skeleton-section"></div>
       </div>
 
-      <div class="notifications-section">
-        <div class="section-header">
-          <h2>Notifications</h2>
-          <button @click="showAddModal = true" class="add-btn">+ Add Notification</button>
+      <div v-else-if="website" class="content">
+        <!-- Section 2: Analytics Stats Row -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon">👁️</div>
+            <div class="stat-value" :style="{ color: '#4f6ef7' }">{{ analytics.total_displays }}</div>
+            <div class="stat-label">Total Displays</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-value" :style="{ color: '#22c55e' }">{{ analytics.displays_this_week }}</div>
+            <div class="stat-label">This Week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-value" :style="{ color: '#a855f7' }">{{ analytics.displays_today }}</div>
+            <div class="stat-label">Today</div>
+          </div>
         </div>
 
-        <div v-if="notifications.length === 0" class="empty-state">
-          <p>No notifications yet. Add your first notification!</p>
+        <!-- Empty state for zero displays -->
+        <div v-if="analytics.total_displays === 0" class="no-displays-box">
+          ℹ️ No displays yet — embed the snippet on your website to start tracking
         </div>
 
-        <div v-else class="notifications-list">
-          <div v-for="notification in notifications" :key="notification.id" class="notification-card">
-            <div class="notification-info">
-              <span class="emoji">{{ notification.emoji }}</span>
-              <div>
-                <h3>{{ notification.message }}</h3>
-                <p>{{ notification.type }} {{ notification.city ? `• ${notification.city}` : '' }}</p>
+        <!-- Simple bar chart -->
+        <div v-if="analytics.total_displays > 0 && analytics.notifications.length > 0" class="chart-section">
+          <h3>Displays per Notification</h3>
+          <div class="chart-container">
+            <div v-for="notification in analytics.notifications" :key="notification.id" class="chart-bar-wrapper">
+              <div class="chart-bar-label">{{ notification.message.substring(0, 20) }}{{ notification.message.length > 20 ? '...' : '' }}</div>
+              <div class="chart-bar">
+                <div class="chart-bar-fill" 
+                     :style="{ width: getBarWidth(notification.total_displays) + '%' }"
+                     :title="notification.total_displays + ' displays'">
+                </div>
+                <span class="chart-bar-value">{{ notification.total_displays }}</span>
               </div>
             </div>
-            <div class="notification-actions">
-              <button @click="toggleNotification(notification)" class="toggle-btn">
-                {{ notification.is_active ? 'Active' : 'Inactive' }}
-              </button>
-              <button @click="deleteNotification(notification.id)" class="delete-btn">Delete</button>
+          </div>
+        </div>
+
+        <!-- Section 3: Embed Snippet -->
+        <div class="snippet-section">
+          <h2>Embed Snippet</h2>
+          <p class="subtitle">Add this snippet to your website to show social proof notifications</p>
+          <div class="snippet-box">
+            <code>{{ snippet }}</code>
+            <button @click="copySnippet" class="copy-btn">
+              {{ copied ? 'Copied!' : 'Copy' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Section 4: Notifications List -->
+        <div class="notifications-section">
+          <div class="section-header">
+            <h2>Notifications</h2>
+            <button @click="showAddModal = true" class="add-btn">+ Add Notification</button>
+          </div>
+
+          <div v-if="analytics.notifications.length === 0" class="empty-state">
+            <p>No notifications yet. Add your first one!</p>
+            <button @click="showAddModal = true" class="add-btn-empty">+</button>
+          </div>
+
+          <div v-else class="notifications-list">
+            <div v-for="notification in analytics.notifications" :key="notification.id" 
+                 :class="['notification-card', 'border-' + notification.type]">
+              <div class="notification-left">
+                <div class="emoji-circle">{{ notification.emoji }}</div>
+                <div class="notification-text">
+                  <h3>{{ notification.message }}</h3>
+                  <p>{{ notification.type }}</p>
+                </div>
+              </div>
+              <div class="notification-right">
+                <div class="display-badge">{{ notification.total_displays }} shown</div>
+                <p class="last-shown">Last shown: {{ formatLastShown(notification.last_shown) }}</p>
+                <div class="notification-actions">
+                  <button @click="toggleNotification(notification)" 
+                          :class="['toggle-btn', notification.is_active ? 'active' : 'inactive']">
+                    {{ notification.is_active ? 'Active' : 'Inactive' }}
+                  </button>
+                  <button @click="deleteNotification(notification.id)" class="delete-btn">Delete</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Add Notification Modal -->
+    <!-- Section 5: Add Notification Modal -->
     <div v-if="showAddModal" class="modal-overlay" @click.self="showAddModal = false">
       <div class="modal">
         <h2>Add Notification</h2>
@@ -64,7 +122,8 @@
           </div>
           <div class="form-group">
             <label>Message</label>
-            <input v-model="newNotification.message" type="text" required placeholder="John just purchased Pro Plan" />
+            <input v-model="newNotification.message" type="text" required 
+                   placeholder="e.g. John from New York just purchased Pro Plan" />
           </div>
           <div class="form-group">
             <label>City (optional)</label>
@@ -81,7 +140,8 @@
           <div class="modal-actions">
             <button type="button" @click="showAddModal = false" class="cancel-btn">Cancel</button>
             <button type="submit" :disabled="adding" class="submit-btn">
-              {{ adding ? 'Adding...' : 'Add' }}
+              <span v-if="adding" class="spinner"></span>
+              <span v-else>Save</span>
             </button>
           </div>
           <p v-if="addError" class="error">{{ addError }}</p>
@@ -99,7 +159,12 @@ export default {
   data() {
     return {
       website: null,
-      notifications: [],
+      analytics: {
+        total_displays: 0,
+        displays_this_week: 0,
+        displays_today: 0,
+        notifications: []
+      },
       snippet: '',
       loading: true,
       showAddModal: false,
@@ -116,9 +181,11 @@ export default {
     }
   },
   async mounted() {
-    await this.fetchWebsite()
-    await this.fetchNotifications()
-    await this.fetchSnippet()
+    await Promise.all([
+      this.fetchWebsite(),
+      this.fetchAnalytics(),
+      this.fetchSnippet()
+    ])
   },
   methods: {
     async fetchWebsite() {
@@ -129,12 +196,12 @@ export default {
         console.error('Failed to fetch website:', err)
       }
     },
-    async fetchNotifications() {
+    async fetchAnalytics() {
       try {
-        const response = await api.get(`/websites/${this.$route.params.id}/notifications`)
-        this.notifications = response.data
+        const response = await api.get(`/websites/${this.$route.params.id}/analytics`)
+        this.analytics = response.data
       } catch (err) {
-        console.error('Failed to fetch notifications:', err)
+        console.error('Failed to fetch analytics:', err)
       } finally {
         this.loading = false
       }
@@ -152,9 +219,10 @@ export default {
       this.addError = ''
       try {
         const response = await api.post(`/websites/${this.$route.params.id}/notifications`, this.newNotification)
-        this.notifications.push(response.data)
         this.showAddModal = false
         this.newNotification = { type: 'purchase', message: '', city: '', country: '', emoji: '🛒' }
+        await this.fetchAnalytics()
+        alert('Notification added!')
       } catch (err) {
         this.addError = err.response?.data?.message || 'Failed to add notification'
       } finally {
@@ -163,11 +231,8 @@ export default {
     },
     async toggleNotification(notification) {
       try {
-        const response = await api.patch(`/notifications/${notification.id}/toggle`)
-        const index = this.notifications.findIndex(n => n.id === notification.id)
-        if (index !== -1) {
-          this.notifications[index] = response.data
-        }
+        await api.patch(`/notifications/${notification.id}/toggle`)
+        await this.fetchAnalytics()
       } catch (err) {
         alert('Failed to toggle notification')
       }
@@ -177,7 +242,7 @@ export default {
       
       try {
         await api.delete(`/notifications/${id}`)
-        this.notifications = this.notifications.filter(n => n.id !== id)
+        await this.fetchAnalytics()
       } catch (err) {
         alert('Failed to delete notification')
       }
@@ -186,6 +251,26 @@ export default {
       navigator.clipboard.writeText(this.snippet)
       this.copied = true
       setTimeout(() => this.copied = false, 2000)
+    },
+    formatLastShown(date) {
+      if (!date) return 'Never shown'
+      
+      const now = new Date()
+      const past = new Date(date)
+      const diffMs = now - past
+      const diffMins = Math.floor(diffMs / 60000)
+      const diffHours = Math.floor(diffMs / 3600000)
+      const diffDays = Math.floor(diffMs / 86400000)
+
+      if (diffMins < 1) return 'Just now'
+      if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`
+      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+      if (diffDays === 1) return 'Yesterday'
+      return `${diffDays} days ago`
+    },
+    getBarWidth(displays) {
+      const maxDisplays = Math.max(...this.analytics.notifications.map(n => n.total_displays))
+      return maxDisplays > 0 ? (displays / maxDisplays) * 100 : 0
     }
   }
 }
@@ -194,61 +279,197 @@ export default {
 <style scoped>
 .website-detail {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #f8fafc;
 }
 
-.detail-header {
-  background: white;
-  padding: 1.5rem 2rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.page-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Page Header */
+.page-header {
+  margin-bottom: 2rem;
 }
 
 .back-link {
-  color: #667eea;
+  color: #4f6ef7;
   text-decoration: none;
   display: inline-block;
   margin-bottom: 1rem;
+  font-weight: 500;
 }
 
-.detail-header h1 {
-  color: #333;
-  margin: 0;
+.page-header h1 {
+  color: #1a1a1a;
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 700;
 }
 
-.detail-content {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.loading {
-  text-align: center;
-  padding: 2rem;
+.domain {
   color: #666;
+  margin: 0;
+  font-size: 1rem;
 }
 
+/* Loading Skeleton */
+.loading {
+  padding: 2rem 0;
+}
+
+.skeleton-header {
+  height: 80px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-stats {
+  height: 120px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-section {
+  height: 200px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Stats Row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.stat-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.no-displays-box {
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  color: #854d0e;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.chart-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.chart-section h3 {
+  color: #1a1a1a;
+  margin: 0 0 1.5rem 0;
+  font-weight: 700;
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chart-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chart-bar-label {
+  font-size: 0.875rem;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chart-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-bar-fill {
+  height: 32px;
+  background: #4f6ef7;
+  border-radius: 4px;
+  min-width: 4px;
+  transition: width 0.3s ease;
+}
+
+.chart-bar-value {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+  min-width: 30px;
+}
+
+/* Snippet Section */
 .snippet-section {
   background: white;
   padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
 }
 
 .snippet-section h2 {
+  color: #1a1a1a;
   margin: 0 0 0.5rem 0;
-  color: #333;
+  font-weight: 700;
 }
 
-.snippet-section p {
+.subtitle {
   color: #666;
-  margin-bottom: 1rem;
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
 }
 
 .snippet-box {
-  background: #f8f9fa;
+  background: #f1f5f9;
   padding: 1rem;
-  border-radius: 6px;
+  border-radius: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -259,22 +480,27 @@ export default {
   flex: 1;
   font-family: monospace;
   color: #333;
+  font-size: 0.875rem;
   word-break: break-all;
 }
 
 .copy-btn {
   padding: 0.5rem 1rem;
-  background: #667eea;
+  background: #4f6ef7;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-weight: 500;
   white-space: nowrap;
 }
 
-.notifications-section h2 {
-  color: #333;
-  margin: 0 0 1rem 0;
+/* Notifications Section */
+.notifications-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .section-header {
@@ -284,19 +510,38 @@ export default {
   margin-bottom: 1.5rem;
 }
 
+.section-header h2 {
+  color: #1a1a1a;
+  margin: 0;
+  font-weight: 700;
+}
+
 .add-btn {
   padding: 0.5rem 1rem;
-  background: #667eea;
+  background: #4f6ef7;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .empty-state {
   text-align: center;
   padding: 3rem;
   color: #666;
+}
+
+.add-btn-empty {
+  margin-top: 1rem;
+  width: 50px;
+  height: 50px;
+  font-size: 1.5rem;
+  background: #4f6ef7;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
 }
 
 .notifications-list {
@@ -307,32 +552,77 @@ export default {
 .notification-card {
   background: white;
   padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 1rem;
 }
 
-.notification-info {
+.notification-card.border-purchase {
+  border-left: 4px solid #22c55e;
+}
+
+.notification-card.border-signup {
+  border-left: 4px solid #4f6ef7;
+}
+
+.notification-card.border-review {
+  border-left: 4px solid #f97316;
+}
+
+.notification-left {
   display: flex;
   gap: 1rem;
   align-items: center;
+  flex: 1;
 }
 
-.emoji {
-  font-size: 2rem;
+.emoji-circle {
+  width: 48px;
+  height: 48px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
 }
 
-.notification-info h3 {
+.notification-text h3 {
   margin: 0 0 0.25rem 0;
-  color: #333;
+  color: #1a1a1a;
+  font-weight: 600;
 }
 
-.notification-info p {
+.notification-text p {
   margin: 0;
   color: #666;
   font-size: 0.875rem;
+}
+
+.notification-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.display-badge {
+  background: #4f6ef7;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.last-shown {
+  color: #666;
+  font-size: 0.75rem;
+  margin: 0 0 0.75rem 0;
 }
 
 .notification-actions {
@@ -342,29 +632,42 @@ export default {
 
 .toggle-btn {
   padding: 0.5rem 1rem;
-  background: #667eea;
-  color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.toggle-btn.active {
+  background: #22c55e;
+  color: white;
+}
+
+.toggle-btn.inactive {
+  background: #ccc;
+  color: white;
 }
 
 .delete-btn {
   padding: 0.5rem 1rem;
-  background: #e74c3c;
+  background: #ef4444;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -377,11 +680,13 @@ export default {
   border-radius: 12px;
   width: 100%;
   max-width: 400px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
 .modal h2 {
   margin: 0 0 1.5rem 0;
-  color: #333;
+  color: #1a1a1a;
+  font-weight: 700;
 }
 
 .form-group {
@@ -392,6 +697,7 @@ export default {
   display: block;
   margin-bottom: 0.5rem;
   color: #555;
+  font-weight: 500;
 }
 
 .form-group input,
@@ -400,6 +706,7 @@ export default {
   padding: 0.75rem;
   border: 1px solid #ddd;
   border-radius: 6px;
+  font-size: 1rem;
 }
 
 .modal-actions {
@@ -416,16 +723,22 @@ export default {
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-weight: 500;
 }
 
 .submit-btn {
   flex: 1;
   padding: 0.75rem;
-  background: #667eea;
+  background: #4f6ef7;
   color: white;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .submit-btn:disabled {
@@ -433,9 +746,23 @@ export default {
   cursor: not-allowed;
 }
 
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .error {
-  color: #e74c3c;
+  color: #ef4444;
   text-align: center;
   margin-top: 1rem;
+  font-size: 0.875rem;
 }
 </style>

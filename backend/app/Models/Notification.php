@@ -15,4 +15,9 @@ class Notification extends Model
     {
         return $this->belongsTo(Website::class);
     }
+
+    public function displays()
+    {
+        return $this->hasMany(NotificationDisplay::class, 'notification_id');
+    }
 }

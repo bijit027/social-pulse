@@ -27,4 +27,9 @@ class Website extends Model
     {
         return $this->hasMany(Notification::class);
     }
+
+    public function notificationDisplays()
+    {
+        return $this->hasMany(NotificationDisplay::class, 'website_id');
+    }
 }

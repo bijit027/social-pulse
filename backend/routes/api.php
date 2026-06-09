@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/websites/{website}', [WebsiteController::class, 'update']);
     Route::delete('/websites/{website}', [WebsiteController::class, 'destroy']);
     Route::get('/websites/{website}/snippet', [WebsiteController::class, 'snippet']);
+    Route::get('/websites/{website}/analytics', [WebsiteController::class, 'analytics']);
 
     // Notifications
     Route::get('/websites/{website}/notifications', [NotificationController::class, 'index']);
