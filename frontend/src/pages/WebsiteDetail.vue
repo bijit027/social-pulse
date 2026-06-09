@@ -1,115 +1,186 @@
 <template>
   <div class="website-detail">
-    <el-container class="detail-container">
-      <el-header class="detail-header">
-        <div class="header-left">
-          <router-link to="/">
-            <el-button :icon="ArrowLeft">Back to Dashboard</el-button>
-          </router-link>
-          <div class="header-title">
-            <h1>{{ website?.name }}</h1>
-            <p class="domain">{{ website?.domain }}</p>
-          </div>
-        </div>
-      </el-header>
+    <Sidebar />
+    <div class="main-content">
+      <div class="page-header">
+        <h1>{{ website?.name }}</h1>
+        <p class="domain">{{ website?.domain }}</p>
+      </div>
 
-      <el-main class="detail-main">
-        <div v-if="loading" class="loading-container">
-          <el-skeleton :rows="5" animated />
-        </div>
+      <div v-if="loading" class="loading-container">
+        <el-skeleton :rows="5" animated />
+      </div>
 
-        <div v-else-if="website" class="content">
-          <!-- Analytics Stats Row -->
-          <el-row :gutter="20" class="stats-row">
-            <el-col :span="8">
-              <el-card shadow="hover" class="stat-card">
-                <el-statistic title="Total Displays" :value="analytics.total_displays">
-                  <template #prefix>
-                    <el-icon :size="24" color="#4f6ef7"><View /></el-icon>
-                  </template>
-                </el-statistic>
-              </el-card>
-            </el-col>
-            <el-col :span="8">
-              <el-card shadow="hover" class="stat-card">
-                <el-statistic title="This Week" :value="analytics.displays_this_week">
-                  <template #prefix>
-                    <el-icon :size="24" color="#22c55e"><Calendar /></el-icon>
-                  </template>
-                </el-statistic>
-              </el-card>
-            </el-col>
-            <el-col :span="8">
-              <el-card shadow="hover" class="stat-card">
-                <el-statistic title="Today" :value="analytics.displays_today">
-                  <template #prefix>
-                    <el-icon :size="24" color="#a855f7"><Lightning /></el-icon>
-                  </template>
-                </el-statistic>
-              </el-card>
-            </el-col>
-          </el-row>
+      <div v-else-if="website" class="content">
+        <el-tabs v-model="activeTab" class="site-tabs">
+          <!-- Overview Tab -->
+          <el-tab-pane label="Overview" name="overview">
+            <div class="tab-content">
+              <!-- Statistic Cards -->
+              <el-row :gutter="20" class="stats-row">
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="Total Displays" :value="analytics.total_displays">
+                      <template #prefix>
+                        <el-icon :size="24" color="#FF6B35"><View /></el-icon>
+                      </template>
+                    </el-statistic>
+                  </el-card>
+                </el-col>
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="Today" :value="analytics.displays_today">
+                      <template #prefix>
+                        <el-icon :size="24" color="#22c55e"><Calendar /></el-icon>
+                      </template>
+                    </el-statistic>
+                  </el-card>
+                </el-col>
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="This Week" :value="analytics.displays_this_week">
+                      <template #prefix>
+                        <el-icon :size="24" color="#a855f7"><Lightning /></el-icon>
+                      </template>
+                    </el-statistic>
+                  </el-card>
+                </el-col>
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="Active Notifications" :value="analytics.notifications.filter(n => n.is_active).length">
+                      <template #prefix>
+                        <el-icon :size="24" color="#409eff"><Bell /></el-icon>
+                      </template>
+                    </el-statistic>
+                  </el-card>
+                </el-col>
+              </el-row>
 
-          <!-- Empty state for zero displays -->
-          <el-alert v-if="analytics.total_displays === 0" type="warning" :closable="false" class="no-displays-alert">
-            ℹ️ No displays yet — embed the snippet on your website to start tracking
-          </el-alert>
-
-          <!-- Simple bar chart -->
-          <el-card v-if="analytics.total_displays > 0 && analytics.notifications.length > 0" class="chart-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <span>Displays per Notification</span>
-              </div>
-            </template>
-            <div class="chart-container">
-              <div v-for="notification in analytics.notifications" :key="notification.id" class="chart-bar-wrapper">
-                <div class="chart-bar-label">{{ notification.message.substring(0, 30) }}{{ notification.message.length > 30 ? '...' : '' }}</div>
-                <div class="chart-bar">
-                  <el-progress :percentage="getBarWidth(notification.total_displays)" :stroke-width="32" :show-text="false" />
-                  <span class="chart-bar-value">{{ notification.total_displays }}</span>
-                </div>
-              </div>
-            </div>
-          </el-card>
-
-          <!-- Embed Snippet -->
-          <el-card class="snippet-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <span>Embed Snippet</span>
-              </div>
-            </template>
-            <p class="subtitle">Add this snippet to your website to show social proof notifications</p>
-            <div class="snippet-box">
-              <el-input v-model="snippet" type="textarea" :rows="3" readonly />
-              <el-button type="primary" :icon="copied ? Check : DocumentCopy" @click="copySnippet">
-                {{ copied ? 'Copied!' : 'Copy' }}
-              </el-button>
-            </div>
-          </el-card>
-
-          <!-- Notifications List with Tabs -->
-          <el-card class="notifications-card" shadow="hover">
-            <el-tabs v-model="activeTab" class="notification-tabs">
-              <!-- Auto Notifications Tab -->
-              <el-tab-pane :name="'auto'">
-                <template #label>
-                  <span class="tab-label">
-                    Auto Notifications
-                    <el-badge :value="autoNotifications.length" :max="99" class="tab-badge" />
-                  </span>
-                </template>
+              <!-- Recent Notifications -->
+              <el-card class="recent-card" shadow="hover">
                 <template #header>
                   <div class="card-header">
-                    <span>Auto Notifications</span>
-                    <el-tag type="success" effect="dark">Live</el-tag>
+                    <span>Recent Notifications</span>
                   </div>
                 </template>
-                
-                <el-alert v-if="autoNotifications.length === 0" type="info" :closable="false" class="auto-empty-alert">
-                  <div class="auto-empty-content">
-                    <p>No automatic notifications yet. Connect your WooCommerce store using the webhook URL below. Real purchases will appear here automatically.</p>
+                <div class="notifications-list">
+                  <el-card v-for="notification in analytics.notifications.slice(0, 5)" :key="notification.id" 
+                           class="notification-card" shadow="never">
+                    <div class="notification-content">
+                      <div class="notification-left">
+                        <div class="emoji-circle">{{ notification.emoji }}</div>
+                        <div class="notification-text">
+                          <h3>{{ notification.message }}</h3>
+                          <el-tag :type="getNotificationTypeTag(notification.type)" size="small">{{ notification.type }}</el-tag>
+                        </div>
+                      </div>
+                      <div class="notification-right">
+                        <el-tag type="primary">{{ notification.total_displays }} shown</el-tag>
+                      </div>
+                    </div>
+                  </el-card>
+                </div>
+              </el-card>
+            </div>
+          </el-tab-pane>
+
+          <!-- Notifications Tab -->
+          <el-tab-pane label="Notifications" name="notifications">
+            <div class="tab-content">
+              <div class="tab-header">
+                <h2>Notifications</h2>
+                <el-button type="primary" :icon="Plus" @click="showAddModal = true">Create Notification</el-button>
+              </div>
+
+              <el-tabs v-model="notificationTab" class="notification-tabs">
+                <el-tab-pane label="Auto" name="auto">
+                  <el-alert v-if="autoNotifications.length === 0" type="info" :closable="false" class="auto-empty-alert">
+                    <div class="auto-empty-content">
+                      <p>No automatic notifications yet. Connect your WooCommerce store using the webhook URL below.</p>
+                      <div class="webhook-url-box">
+                        <el-input v-model="webhookUrl" readonly class="webhook-input" />
+                        <el-button type="primary" :icon="copiedWebhook ? Check : DocumentCopy" @click="copyWebhookUrl">
+                          {{ copiedWebhook ? 'Copied!' : 'Copy' }}
+                        </el-button>
+                      </div>
+                    </div>
+                  </el-alert>
+
+                  <div v-else class="notifications-list">
+                    <el-card v-for="notification in autoNotifications" :key="notification.id" 
+                             class="notification-card auto-card" shadow="never">
+                      <div class="notification-content">
+                        <div class="notification-left">
+                          <div class="emoji-circle">{{ notification.emoji }}</div>
+                          <div class="notification-text">
+                            <h3>{{ notification.message }}</h3>
+                            <el-tag type="success" size="small">woocommerce</el-tag>
+                            <p class="location">{{ notification.city }}{{ notification.country ? ', ' + notification.country : '' }}</p>
+                          </div>
+                        </div>
+                        <div class="notification-right">
+                          <el-tag type="primary">{{ notification.total_displays }} shown</el-tag>
+                          <p class="created-time">{{ formatRelativeTime(notification.created_at) }}</p>
+                          <div class="notification-actions">
+                            <el-button type="danger" size="small" :icon="Delete" @click="deleteNotification(notification.id)">Delete</el-button>
+                          </div>
+                        </div>
+                      </div>
+                    </el-card>
+                  </div>
+                </el-tab-pane>
+
+                <el-tab-pane label="Manual" name="manual">
+                  <el-empty v-if="manualNotifications.length === 0" description="No manual notifications yet. Add your first one!">
+                    <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Notification</el-button>
+                  </el-empty>
+
+                  <div v-else class="notifications-list">
+                    <el-card v-for="notification in manualNotifications" :key="notification.id" 
+                             :class="['notification-card', 'border-' + notification.type]" shadow="never">
+                      <div class="notification-content">
+                        <div class="notification-left">
+                          <div class="emoji-circle">{{ notification.emoji }}</div>
+                          <div class="notification-text">
+                            <h3>{{ notification.message }}</h3>
+                            <el-tag :type="getNotificationTypeTag(notification.type)">{{ notification.type }}</el-tag>
+                          </div>
+                        </div>
+                        <div class="notification-right">
+                          <el-tag type="primary">{{ notification.total_displays }} shown</el-tag>
+                          <p class="last-shown">Last shown: {{ formatLastShown(notification.last_shown) }}</p>
+                          <div class="notification-actions">
+                            <el-button :type="notification.is_active ? 'success' : 'info'" size="small" @click="toggleNotification(notification)">
+                              {{ notification.is_active ? 'Active' : 'Inactive' }}
+                            </el-button>
+                            <el-button type="danger" size="small" :icon="Delete" @click="deleteNotification(notification.id)">Delete</el-button>
+                          </div>
+                        </div>
+                      </div>
+                    </el-card>
+                  </div>
+                </el-tab-pane>
+              </el-tabs>
+            </div>
+          </el-tab-pane>
+
+          <!-- Sources Tab -->
+          <el-tab-pane label="Sources" name="sources">
+            <div class="tab-content">
+              <div class="tab-header">
+                <h2>Sources</h2>
+                <p>Connect services that automatically generate notifications.</p>
+              </div>
+
+              <div class="sources-grid">
+                <el-card class="source-card" shadow="hover">
+                  <div class="source-header">
+                    <h3>WooCommerce</h3>
+                    <el-tag type="success">Connected</el-tag>
+                  </div>
+                  <p class="source-description">Receive purchase events automatically.</p>
+                  <div class="webhook-section">
+                    <label>Webhook URL</label>
                     <div class="webhook-url-box">
                       <el-input v-model="webhookUrl" readonly class="webhook-input" />
                       <el-button type="primary" :icon="copiedWebhook ? Check : DocumentCopy" @click="copyWebhookUrl">
@@ -117,85 +188,173 @@
                       </el-button>
                     </div>
                   </div>
-                </el-alert>
+                </el-card>
 
-                <div v-else class="notifications-list">
-                  <el-card v-for="notification in autoNotifications" :key="notification.id" 
-                           class="notification-card auto-card" shadow="never">
-                    <div class="notification-content">
-                      <div class="notification-left">
-                        <div class="emoji-circle">{{ notification.emoji }}</div>
-                        <div class="notification-text">
-                          <h3>{{ notification.message }}</h3>
-                          <el-tag type="success" size="small">woocommerce</el-tag>
-                          <p class="location">{{ notification.city }}{{ notification.country ? ', ' + notification.country : '' }}</p>
-                        </div>
-                      </div>
-                      <div class="notification-right">
-                        <el-tag type="primary">{{ notification.total_displays }} shown</el-tag>
-                        <p class="created-time">{{ formatRelativeTime(notification.created_at) }}</p>
-                        <div class="notification-actions">
-                          <el-button type="danger" size="small" :icon="Delete" @click="deleteNotification(notification.id)">Delete</el-button>
-                        </div>
-                      </div>
-                    </div>
-                  </el-card>
-                </div>
-              </el-tab-pane>
+                <el-card class="source-card" shadow="hover">
+                  <div class="source-header">
+                    <h3>Stripe</h3>
+                    <el-tag type="info">Coming Soon</el-tag>
+                  </div>
+                  <p class="source-description">Receive payment events.</p>
+                </el-card>
 
-              <!-- Manual Notifications Tab -->
-              <el-tab-pane :name="'manual'">
-                <template #label>
-                  <span class="tab-label">
-                    Manual Notifications
-                    <el-badge :value="manualNotifications.length" :max="99" class="tab-badge" />
-                  </span>
-                </template>
+                <el-card class="source-card" shadow="hover">
+                  <div class="source-header">
+                    <h3>Shopify</h3>
+                    <el-tag type="info">Coming Soon</el-tag>
+                  </div>
+                  <p class="source-description">Connect your Shopify store.</p>
+                </el-card>
+
+                <el-card class="source-card" shadow="hover">
+                  <div class="source-header">
+                    <h3>Custom Webhook</h3>
+                    <el-tag type="info">Coming Soon</el-tag>
+                  </div>
+                  <p class="source-description">Connect any platform.</p>
+                </el-card>
+              </div>
+            </div>
+          </el-tab-pane>
+
+          <!-- Widget Tab -->
+          <el-tab-pane label="Widget" name="widget">
+            <div class="tab-content">
+              <div class="tab-header">
+                <h2>Widget</h2>
+              </div>
+
+              <el-card class="snippet-card" shadow="hover">
                 <template #header>
                   <div class="card-header">
-                    <span>Manual Notifications</span>
-                    <el-tag type="info" effect="plain">Custom</el-tag>
-                    <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Notification</el-button>
+                    <span>Installation</span>
                   </div>
                 </template>
-
-                <el-empty v-if="manualNotifications.length === 0" description="No manual notifications yet. Add your first one!">
-                  <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Notification</el-button>
-                </el-empty>
-
-                <div v-else class="notifications-list">
-                  <el-card v-for="notification in manualNotifications" :key="notification.id" 
-                           :class="['notification-card', 'border-' + notification.type]" shadow="never">
-                    <div class="notification-content">
-                      <div class="notification-left">
-                        <div class="emoji-circle">{{ notification.emoji }}</div>
-                        <div class="notification-text">
-                          <h3>{{ notification.message }}</h3>
-                          <el-tag :type="getNotificationTypeTag(notification.type)">{{ notification.type }}</el-tag>
-                        </div>
-                      </div>
-                      <div class="notification-right">
-                        <el-tag type="primary">{{ notification.total_displays }} shown</el-tag>
-                        <p class="last-shown">Last shown: {{ formatLastShown(notification.last_shown) }}</p>
-                        <div class="notification-actions">
-                          <el-button :type="notification.is_active ? 'success' : 'info'" size="small" @click="toggleNotification(notification)">
-                            {{ notification.is_active ? 'Active' : 'Inactive' }}
-                          </el-button>
-                          <el-button type="danger" size="small" :icon="Delete" @click="deleteNotification(notification.id)">Delete</el-button>
-                        </div>
-                      </div>
-                    </div>
-                  </el-card>
+                <p class="subtitle">Add this snippet to your website to show social proof notifications</p>
+                <div class="snippet-box">
+                  <el-input v-model="snippet" type="textarea" :rows="3" readonly />
+                  <el-button type="primary" :icon="copied ? Check : DocumentCopy" @click="copySnippet">
+                    {{ copied ? 'Copied!' : 'Copy' }}
+                  </el-button>
                 </div>
-              </el-tab-pane>
-            </el-tabs>
-          </el-card>
-        </div>
-      </el-main>
-    </el-container>
+              </el-card>
+
+              <el-card class="widget-settings-card" shadow="hover">
+                <template #header>
+                  <div class="card-header">
+                    <span>Appearance</span>
+                  </div>
+                </template>
+                <div class="widget-settings">
+                  <el-form label-position="top">
+                    <el-form-item label="Position">
+                      <el-select v-model="widgetSettings.position" style="width: 100%">
+                        <el-option label="Bottom Right" value="bottom-right" />
+                        <el-option label="Bottom Left" value="bottom-left" />
+                        <el-option label="Top Right" value="top-right" />
+                        <el-option label="Top Left" value="top-left" />
+                      </el-select>
+                    </el-form-item>
+                    <el-form-item label="Theme">
+                      <el-select v-model="widgetSettings.theme" style="width: 100%">
+                        <el-option label="Light" value="light" />
+                        <el-option label="Dark" value="dark" />
+                      </el-select>
+                    </el-form-item>
+                  </el-form>
+                </div>
+              </el-card>
+            </div>
+          </el-tab-pane>
+
+          <!-- Analytics Tab -->
+          <el-tab-pane label="Analytics" name="analytics">
+            <div class="tab-content">
+              <div class="tab-header">
+                <h2>Analytics</h2>
+              </div>
+
+              <el-row :gutter="20" class="stats-row">
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="Total Displays" :value="analytics.total_displays" />
+                  </el-card>
+                </el-col>
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="Today's Displays" :value="analytics.displays_today" />
+                  </el-card>
+                </el-col>
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="Weekly Displays" :value="analytics.displays_this_week" />
+                  </el-card>
+                </el-col>
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="Monthly Displays" :value="analytics.displays_this_week * 4" />
+                  </el-card>
+                </el-col>
+              </el-row>
+
+              <el-card v-if="analytics.total_displays > 0 && analytics.notifications.length > 0" class="chart-card" shadow="hover">
+                <template #header>
+                  <div class="card-header">
+                    <span>Displays per Notification</span>
+                  </div>
+                </template>
+                <div class="chart-container">
+                  <div v-for="notification in analytics.notifications" :key="notification.id" class="chart-bar-wrapper">
+                    <div class="chart-bar-label">{{ notification.message.substring(0, 30) }}{{ notification.message.length > 30 ? '...' : '' }}</div>
+                    <div class="chart-bar">
+                      <el-progress :percentage="getBarWidth(notification.total_displays)" :stroke-width="32" :show-text="false" color="#FF6B35" />
+                      <span class="chart-bar-value">{{ notification.total_displays }}</span>
+                    </div>
+                  </div>
+                </div>
+              </el-card>
+            </div>
+          </el-tab-pane>
+
+          <!-- Settings Tab -->
+          <el-tab-pane label="Settings" name="settings">
+            <div class="tab-content">
+              <div class="tab-header">
+                <h2>Settings</h2>
+              </div>
+
+              <el-card class="settings-card" shadow="hover">
+                <template #header>
+                  <div class="card-header">
+                    <span>Site Information</span>
+                  </div>
+                </template>
+                <el-descriptions :column="1" border>
+                  <el-descriptions-item label="Site Name">{{ website.name }}</el-descriptions-item>
+                  <el-descriptions-item label="Website URL">{{ website.domain }}</el-descriptions-item>
+                  <el-descriptions-item label="Status">
+                    <el-tag :type="website.is_active ? 'success' : 'info'">{{ website.is_active ? 'Active' : 'Disabled' }}</el-tag>
+                  </el-descriptions-item>
+                  <el-descriptions-item label="Created">{{ formatDate(website.created_at) }}</el-descriptions-item>
+                </el-descriptions>
+              </el-card>
+
+              <el-card class="danger-card" shadow="hover">
+                <template #header>
+                  <div class="card-header">
+                    <span>Danger Zone</span>
+                  </div>
+                </template>
+                <el-button type="danger" @click="deleteSite">Delete Site</el-button>
+              </el-card>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+    </div>
 
     <!-- Add Notification Dialog -->
-    <el-dialog v-model="showAddModal" title="Add Notification" width="500px">
+    <el-dialog v-model="showAddModal" title="Create Notification" width="500px">
       <el-form @submit.prevent="handleAddNotification" :model="newNotification" label-position="top">
         <el-form-item label="Type">
           <el-select v-model="newNotification.type" required style="width: 100%">
@@ -231,19 +390,21 @@
 
 <script>
 import api from '../services/api'
-import { ArrowLeft, View, Calendar, Lightning, Plus, DocumentCopy, Check, Delete } from '@element-plus/icons-vue'
+import Sidebar from '../components/Sidebar.vue'
+import { View, Calendar, Lightning, Plus, DocumentCopy, Check, Delete, Bell } from '@element-plus/icons-vue'
 
 export default {
   name: 'WebsiteDetail',
   components: {
-    ArrowLeft,
+    Sidebar,
     View,
     Calendar,
     Lightning,
     Plus,
     DocumentCopy,
     Check,
-    Delete
+    Delete,
+    Bell
   },
   data() {
     return {
@@ -260,8 +421,13 @@ export default {
       adding: false,
       addError: '',
       copied: false,
-      activeTab: 'auto',
+      activeTab: 'overview',
+      notificationTab: 'auto',
       copiedWebhook: false,
+      widgetSettings: {
+        position: 'bottom-right',
+        theme: 'light'
+      },
       newNotification: {
         type: 'purchase',
         message: '',
@@ -350,6 +516,16 @@ export default {
         alert('Failed to delete notification')
       }
     },
+    async deleteSite() {
+      if (!confirm('Are you sure you want to delete this site? This action cannot be undone.')) return
+      
+      try {
+        await api.delete(`/websites/${this.$route.params.id}`)
+        this.$router.push('/sites')
+      } catch (err) {
+        alert('Failed to delete site')
+      }
+    },
     copySnippet() {
       navigator.clipboard.writeText(this.snippet)
       this.copied = true
@@ -375,6 +551,10 @@ export default {
       if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
       if (diffDays === 1) return 'Yesterday'
       return `${diffDays} days ago`
+    },
+    formatDate(date) {
+      if (!date) return 'N/A'
+      return new Date(date).toLocaleDateString()
     },
     getBarWidth(displays) {
       const maxDisplays = Math.max(...this.analytics.notifications.map(n => n.total_displays))
@@ -410,33 +590,24 @@ export default {
 
 <style scoped>
 .website-detail {
+  display: flex;
   min-height: 100vh;
   background: var(--el-bg-color-page);
 }
 
-.detail-container {
-  min-height: 100vh;
+.main-content {
+  flex: 1;
+  padding: 2rem;
 }
 
-.detail-header {
-  background: white;
-  padding: 1rem 2rem;
-  display: flex;
-  align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border-bottom: 1px solid var(--el-border-color-light);
+.page-header {
+  margin-bottom: 2rem;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.header-title h1 {
+.page-header h1 {
+  margin: 0 0 0.5rem 0;
   color: var(--el-text-color-primary);
-  margin: 0 0 0.25rem 0;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
 }
 
@@ -444,12 +615,6 @@ export default {
   color: var(--el-text-color-secondary);
   margin: 0;
   font-size: 0.875rem;
-}
-
-.detail-main {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 .loading-container {
@@ -462,20 +627,47 @@ export default {
   gap: 1.5rem;
 }
 
+.site-tabs {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.tab-content {
+  padding: 1rem 0;
+}
+
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.tab-header h2 {
+  margin: 0;
+  color: var(--el-text-color-primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.tab-header p {
+  margin: 0.5rem 0 0 0;
+  color: var(--el-text-color-secondary);
+}
+
 .stats-row {
-  margin-bottom: 0;
+  margin-bottom: 1.5rem;
 }
 
 .stat-card {
   text-align: center;
+  border-radius: 12px;
 }
 
-.no-displays-alert {
-  margin-bottom: 0;
-}
-
-.chart-card {
-  margin-bottom: 0;
+.recent-card {
+  border-radius: 12px;
 }
 
 .card-header {
@@ -484,63 +676,6 @@ export default {
   align-items: center;
   font-weight: 600;
   color: var(--el-text-color-primary);
-}
-
-.chart-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.chart-bar-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.chart-bar-label {
-  font-size: 0.875rem;
-  color: var(--el-text-color-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.chart-bar {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.chart-bar-value {
-  font-size: 0.875rem;
-  color: var(--el-text-color-secondary);
-  font-weight: 500;
-  min-width: 40px;
-}
-
-.snippet-card {
-  margin-bottom: 0;
-}
-
-.subtitle {
-  color: var(--el-text-color-secondary);
-  margin: 0 0 1rem 0;
-  font-size: 0.875rem;
-}
-
-.snippet-box {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-start;
-}
-
-.snippet-box .el-textarea {
-  flex: 1;
-}
-
-.notifications-card {
-  margin-bottom: 0;
 }
 
 .notifications-list {
@@ -621,16 +756,6 @@ export default {
   margin-top: 1rem;
 }
 
-.tab-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.tab-badge {
-  margin-left: 0.25rem;
-}
-
 .auto-empty-alert {
   margin-bottom: 0;
 }
@@ -666,23 +791,147 @@ export default {
   margin: 0;
 }
 
+.sources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.source-card {
+  border-radius: 12px;
+}
+
+.source-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.source-header h3 {
+  margin: 0;
+  color: var(--el-text-color-primary);
+  font-weight: 600;
+}
+
+.source-description {
+  color: var(--el-text-color-secondary);
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+}
+
+.webhook-section {
+  margin-top: 1rem;
+}
+
+.webhook-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--el-text-color-regular);
+  font-weight: 500;
+}
+
+.snippet-card {
+  border-radius: 12px;
+}
+
+.subtitle {
+  color: var(--el-text-color-secondary);
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+}
+
+.snippet-box {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.snippet-box .el-textarea {
+  flex: 1;
+}
+
+.widget-settings-card {
+  border-radius: 12px;
+  margin-top: 1.5rem;
+}
+
+.widget-settings {
+  max-width: 400px;
+}
+
+.chart-card {
+  border-radius: 12px;
+  margin-top: 1.5rem;
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chart-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chart-bar-label {
+  font-size: 0.875rem;
+  color: var(--el-text-color-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chart-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.chart-bar-value {
+  font-size: 0.875rem;
+  color: var(--el-text-color-secondary);
+  font-weight: 500;
+  min-width: 40px;
+}
+
+.settings-card {
+  border-radius: 12px;
+}
+
+.danger-card {
+  border-radius: 12px;
+  margin-top: 1.5rem;
+}
+
 @media (max-width: 768px) {
-  .detail-header {
+  .main-content {
     padding: 1rem;
   }
   
-  .detail-main {
-    padding: 1rem;
+  .page-header {
+    margin-bottom: 1rem;
   }
   
-  .header-left {
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .tab-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 1rem;
   }
   
   .stats-row :deep(.el-col) {
     margin-bottom: 1rem;
+  }
+  
+  .sources-grid {
+    grid-template-columns: 1fr;
   }
   
   .notification-content {

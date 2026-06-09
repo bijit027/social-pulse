@@ -1,85 +1,127 @@
 <template>
   <div class="dashboard">
-    <el-container class="dashboard-container">
-      <el-header class="dashboard-header">
-        <div class="header-left">
-          <div class="logo">
-            <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-              <path fill="#667eea" d="M14.747 9.125c.527-1.426 1.736-2.573 3.317-2.573c1.643 0 2.792 1.085 3.318 2.573l6.077 16.867c.186.496.248.931.248 1.147c0 1.209-.992 2.046-2.139 2.046c-1.303 0-1.954-.682-2.264-1.611l-.931-2.915h-8.62l-.93 2.884c-.31.961-.961 1.642-2.232 1.642c-1.24 0-2.294-.93-2.294-2.17c0-.496.155-.868.217-1.023l6.233-16.867zm.34 11.256h5.891l-2.883-8.992h-.062l-2.946 8.992z"/>
-            </svg>
-          </div>
-          <h1>SocialPulse</h1>
-        </div>
-        <div class="header-actions">
-          <router-link to="/settings">
-            <el-button :icon="Setting">Settings</el-button>
-          </router-link>
-          <el-button type="danger" :icon="SwitchButton" @click="handleLogout">Logout</el-button>
-        </div>
-      </el-header>
+    <Sidebar />
+    <div class="main-content">
+      <div class="page-header">
+        <h1>Welcome Back 👋</h1>
+        <p class="subtitle">Manage social proof notifications across all your websites.</p>
+      </div>
 
-      <el-main class="dashboard-main">
-        <div class="hero-section">
-          <div class="hero-text">
-            <span class="eyebrow">Dashboard</span>
-            <h1 class="hero-title">Welcome back</h1>
-            <p class="hero-sub">Manage your websites and track social proof notifications</p>
-          </div>
-          <div class="hero-actions">
-            <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Website</el-button>
-          </div>
-        </div>
+      <div v-if="loading" class="loading-container">
+        <el-skeleton :rows="5" animated />
+      </div>
 
-        <div v-if="loading" class="loading-container">
-          <el-skeleton :rows="3" animated />
-        </div>
+      <div v-else class="content">
+        <!-- Statistics Cards -->
+        <el-row :gutter="20" class="stats-row">
+          <el-col :span="6">
+            <el-card shadow="hover" class="stat-card">
+              <el-statistic title="Total Sites" :value="websites.length">
+                <template #prefix>
+                  <el-icon :size="24" color="#FF6B35"><Monitor /></el-icon>
+                </template>
+              </el-statistic>
+              <p class="stat-description">Connected websites</p>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card shadow="hover" class="stat-card">
+              <el-statistic title="Active Notifications" :value="totalNotifications">
+                <template #prefix>
+                  <el-icon :size="24" color="#22c55e"><Bell /></el-icon>
+                </template>
+              </el-statistic>
+              <p class="stat-description">Currently running notifications</p>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card shadow="hover" class="stat-card">
+              <el-statistic title="Total Displays" :value="totalDisplays">
+                <template #prefix>
+                  <el-icon :size="24" color="#409eff"><View /></el-icon>
+                </template>
+              </el-statistic>
+              <p class="stat-description">All-time widget displays</p>
+            </el-card>
+          </el-col>
+          <el-col :span="6">
+            <el-card shadow="hover" class="stat-card">
+              <el-statistic title="Today's Displays" :value="todayDisplays">
+                <template #prefix>
+                  <el-icon :size="24" color="#a855f7"><Calendar /></el-icon>
+                </template>
+              </el-statistic>
+              <p class="stat-description">Displays in the last 24 hours</p>
+            </el-card>
+          </el-col>
+        </el-row>
 
-        <div v-else-if="websites.length === 0" class="empty-state">
-          <el-empty description="No websites yet. Add your first website to get started!">
+        <!-- Recent Activity -->
+        <el-card class="recent-activity-card" shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>Recent Activity</span>
+            </div>
+          </template>
+          <div class="activity-list">
+            <div v-for="activity in recentActivities" :key="activity.id" class="activity-item">
+              <el-icon class="activity-icon" color="#22c55e"><Check /></el-icon>
+              <span>{{ activity.message }}</span>
+            </div>
+          </div>
+        </el-card>
+
+        <!-- Website List -->
+        <el-card class="websites-card" shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>Websites</span>
+              <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Website</el-button>
+            </div>
+          </template>
+
+          <el-empty v-if="websites.length === 0" description="No websites yet. Create your first website to start displaying notifications.">
             <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Website</el-button>
           </el-empty>
-        </div>
 
-        <div v-else class="websites-grid">
-          <el-card v-for="website in websites" :key="website.id" class="website-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <div class="card-header-left">
-                  <el-icon class="website-icon" :size="24" color="#667eea"><Monitor /></el-icon>
+          <div v-else class="websites-list">
+            <el-card v-for="website in websites" :key="website.id" class="website-card" shadow="never">
+              <div class="website-content">
+                <div class="website-info">
                   <h3>{{ website.name }}</h3>
+                  <p class="domain">{{ website.domain }}</p>
+                  <el-tag :type="website.is_active ? 'success' : 'info'" size="small">
+                    {{ website.is_active ? 'Active' : 'Disabled' }}
+                  </el-tag>
+                  <p class="notification-count">{{ website.notifications_count || 0 }} Notifications</p>
                 </div>
-                <el-tag type="primary">{{ website.notifications_count }} notifications</el-tag>
+                <div class="website-actions">
+                  <el-button type="primary" size="small" @click="goToSite(website.id)">Open</el-button>
+                  <el-button size="small" @click="goToSiteSettings(website.id)">Settings</el-button>
+                  <el-button type="danger" size="small" :icon="Delete" @click="deleteWebsite(website.id)">Delete</el-button>
+                </div>
               </div>
-            </template>
-            <div class="card-body">
-              <p class="domain">{{ website.domain }}</p>
-              <div class="card-actions">
-                <router-link :to="`/websites/${website.id}`">
-                  <el-button type="primary" :icon="View">View</el-button>
-                </router-link>
-                <el-button type="danger" :icon="Delete" @click="deleteWebsite(website.id)">Delete</el-button>
-              </div>
-            </div>
-          </el-card>
-        </div>
-      </el-main>
-    </el-container>
+            </el-card>
+          </div>
+        </el-card>
+      </div>
+    </div>
 
     <!-- Add Website Dialog -->
     <el-dialog v-model="showAddModal" title="Add Website" width="500px">
       <el-form @submit.prevent="handleAddWebsite" :model="newWebsite" label-position="top">
-        <el-form-item label="Website Name">
+        <el-form-item label="Site Name">
           <el-input v-model="newWebsite.name" placeholder="My Website" required />
         </el-form-item>
-        <el-form-item label="Domain">
-          <el-input v-model="newWebsite.domain" placeholder="example.com" required />
+        <el-form-item label="Website URL">
+          <el-input v-model="newWebsite.domain" placeholder="https://example.com" required />
         </el-form-item>
         <el-alert v-if="addError" :title="addError" type="error" :closable="false" style="margin-bottom: 1rem" />
       </el-form>
       <template #footer>
         <el-button @click="showAddModal = false">Cancel</el-button>
         <el-button type="primary" :loading="adding" @click="handleAddWebsite">
-          {{ adding ? 'Adding...' : 'Add' }}
+          {{ adding ? 'Adding...' : 'Create Site' }}
         </el-button>
       </template>
     </el-dialog>
@@ -88,17 +130,20 @@
 
 <script>
 import api from '../services/api'
-import { Setting, SwitchButton, Plus, Monitor, View, Delete } from '@element-plus/icons-vue'
+import Sidebar from '../components/Sidebar.vue'
+import { Plus, Monitor, View, Delete, Bell, Calendar, Check } from '@element-plus/icons-vue'
 
 export default {
   name: 'Dashboard',
   components: {
-    Setting,
-    SwitchButton,
+    Sidebar,
     Plus,
     Monitor,
     View,
-    Delete
+    Delete,
+    Bell,
+    Calendar,
+    Check
   },
   data() {
     return {
@@ -110,11 +155,24 @@ export default {
       newWebsite: {
         name: '',
         domain: ''
-      }
+      },
+      recentActivities: []
+    }
+  },
+  computed: {
+    totalNotifications() {
+      return this.websites.reduce((sum, site) => sum + (site.notifications_count || 0), 0)
+    },
+    totalDisplays() {
+      return 8432 // Placeholder - would need to fetch from API
+    },
+    todayDisplays() {
+      return 245 // Placeholder - would need to fetch from API
     }
   },
   async mounted() {
     await this.fetchWebsites()
+    this.generateRecentActivities()
   },
   methods: {
     async fetchWebsites() {
@@ -126,6 +184,13 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+    generateRecentActivities() {
+      this.recentActivities = [
+        { id: 1, message: 'Purchase received from WooCommerce' },
+        { id: 2, message: 'Manual notification created' },
+        { id: 3, message: 'Widget installed' }
+      ]
     },
     async handleAddWebsite() {
       this.adding = true
@@ -151,9 +216,11 @@ export default {
         alert('Failed to delete website')
       }
     },
-    handleLogout() {
-      localStorage.removeItem('token')
-      this.$router.push('/login')
+    goToSite(id) {
+      this.$router.push(`/sites/${id}`)
+    },
+    goToSiteSettings(id) {
+      this.$router.push(`/sites/${id}/settings`)
     }
   }
 }
@@ -161,185 +228,158 @@ export default {
 
 <style scoped>
 .dashboard {
+  display: flex;
   min-height: 100vh;
   background: var(--el-bg-color-page);
 }
 
-.dashboard-container {
-  min-height: 100vh;
-}
-
-.dashboard-header {
-  background: white;
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  border-bottom: 1px solid var(--el-border-color-light);
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.logo {
-  width: 40px;
-  height: 40px;
-}
-
-.logo svg {
-  width: 100%;
-  height: 100%;
-}
-
-.dashboard-header h1 {
-  color: var(--el-text-color-primary);
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.dashboard-main {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.hero-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
-  color: white;
-}
-
-.hero-text {
+.main-content {
   flex: 1;
+  padding: 2rem;
 }
 
-.eyebrow {
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  opacity: 0.9;
-  margin-bottom: 0.5rem;
-  display: block;
+.page-header {
+  margin-bottom: 2rem;
 }
 
-.hero-title {
-  font-size: 2rem;
-  font-weight: 700;
+.page-header h1 {
   margin: 0 0 0.5rem 0;
+  color: var(--el-text-color-primary);
+  font-size: 1.75rem;
+  font-weight: 700;
 }
 
-.hero-sub {
-  font-size: 1rem;
-  opacity: 0.9;
+.subtitle {
+  color: var(--el-text-color-secondary);
   margin: 0;
-}
-
-.hero-actions {
-  display: flex;
-  gap: 1rem;
+  font-size: 0.875rem;
 }
 
 .loading-container {
   padding: 2rem;
 }
 
-.websites-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+.content {
+  display: flex;
+  flex-direction: column;
   gap: 1.5rem;
 }
 
-.website-card {
-  border-radius: 12px;
-  transition: transform 0.2s, box-shadow 0.2s;
+.stats-row {
+  margin-bottom: 0;
 }
 
-.website-card:hover {
-  transform: translateY(-2px);
+.stat-card {
+  text-align: center;
+  border-radius: 12px;
+}
+
+.stat-description {
+  color: var(--el-text-color-secondary);
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
+}
+
+.recent-activity-card {
+  border-radius: 12px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
 }
 
-.card-header-left {
+.activity-list {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.75rem;
 }
 
-.website-icon {
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--el-bg-color-page);
+  border-radius: 6px;
+}
+
+.activity-icon {
   flex-shrink: 0;
 }
 
-.card-header h3 {
-  margin: 0;
-  color: var(--el-text-color-primary);
-  font-size: 1.125rem;
-  font-weight: 600;
+.websites-card {
+  border-radius: 12px;
 }
 
-.card-body {
+.websites-list {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
+.website-card {
+  border-radius: 8px;
+}
+
+.website-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.website-info {
+  flex: 1;
+}
+
+.website-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: var(--el-text-color-primary);
+  font-weight: 600;
+}
+
 .domain {
-  margin: 0;
   color: var(--el-text-color-secondary);
+  margin: 0 0 0.5rem 0;
   font-size: 0.875rem;
 }
 
-.card-actions {
+.notification-count {
+  color: var(--el-text-color-secondary);
+  margin: 0.5rem 0 0 0;
+  font-size: 0.875rem;
+}
+
+.website-actions {
   display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-
-.card-actions a {
-  text-decoration: none;
-}
-
-.empty-state {
-  padding: 4rem 2rem;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 @media (max-width: 768px) {
-  .hero-section {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .stats-row :deep(.el-col) {
+    margin-bottom: 1rem;
+  }
+  
+  .website-content {
     flex-direction: column;
-    text-align: center;
-    gap: 1.5rem;
   }
   
-  .websites-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .dashboard-header {
-    padding: 1rem;
-  }
-  
-  .dashboard-main {
-    padding: 1rem;
+  .website-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 </style>
