@@ -1,6 +1,7 @@
 <?php
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\WidgetController;
 use Illuminate\Support\Facades\Route;
@@ -8,6 +9,9 @@ use Illuminate\Support\Facades\Route;
 // Public widget endpoints
 Route::get('/widget/{pixelId}', [WidgetController::class, 'serve']);
 Route::post('/widget/{pixelId}/display', [WidgetController::class, 'trackDisplay']);
+
+// Public webhook endpoints
+Route::post('/webhook/woocommerce/{pixelId}', [WebhookController::class, 'woocommerce']);
 
 // Auth endpoints
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');

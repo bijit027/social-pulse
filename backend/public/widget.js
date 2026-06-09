@@ -13,6 +13,17 @@
     })
     .catch(function () {});
 
+  function timeAgo(dateString) {
+    var now = new Date();
+    var date = new Date(dateString);
+    var seconds = Math.floor((now - date) / 1000);
+    
+    if (seconds < 60) return 'just now';
+    if (seconds < 3600) return Math.floor(seconds / 60) + ' minutes ago';
+    if (seconds < 86400) return Math.floor(seconds / 3600) + ' hours ago';
+    return Math.floor(seconds / 86400) + ' days ago';
+  }
+
   function initWidget(notifications, apiUrl, pixelId) {
     var index = 0;
 
@@ -30,6 +41,7 @@
         '<div style="flex:1;">' +
         '<div style="font-size:13px;font-weight:600;color:#1a1a1a;line-height:1.4;">' + n.message + '</div>' +
         (n.city ? '<div style="font-size:11px;color:#888;margin-top:2px;">' + n.city + (n.country ? ', ' + n.country : '') + '</div>' : '') +
+        (n.created_at ? '<div style="font-size:10px;color:#aaa;margin-top:1px;">' + timeAgo(n.created_at) + '</div>' : '') +
         '</div>' +
         '<button onclick="this.closest(\'div\').parentElement.style.display=\'none\'" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:18px;padding:0;line-height:1;">\u00D7</button>' +
         '</div>';

@@ -20,7 +20,7 @@ class WidgetController extends Controller
         $notifications = $website->notifications()
             ->where('is_active', true)
             ->orderBy('display_order')
-            ->get(['id', 'type', 'message', 'city', 'country', 'emoji']);
+            ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at']);
 
         return response()->json(['notifications' => $notifications]);
     }
