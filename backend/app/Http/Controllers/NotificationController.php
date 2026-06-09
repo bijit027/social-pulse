@@ -22,7 +22,11 @@ class NotificationController extends Controller
             return response()->json(['message' => 'Unauthorized.'], 403);
         }
 
-        $notification = $website->notifications()->create($request->validated());
+        $data = array_merge($request->validated(), [
+            'source' => 'manual',
+            'emoji'  => $request->input('emoji', '🛒'),
+        ]);
+        $notification = $website->notifications()->create($data);
         return response()->json($notification, 201);
     }
 

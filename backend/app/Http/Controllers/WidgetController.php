@@ -17,10 +17,23 @@ class WidgetController extends Controller
             return response()->json(['notifications' => []]);
         }
 
+        // First try: get woocommerce notifications from last 24 hours
         $notifications = $website->notifications()
             ->where('is_active', true)
-            ->orderBy('display_order')
+            ->where('source', 'woocommerce')
+            ->where('created_at', '>=', now()->subHours(24))
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
             ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at']);
+
+        // Fallback: if no recent webhook notifications, show manual ones
+        if ($notifications->isEmpty()) {
+            $notifications = $website->notifications()
+                ->where('is_active', true)
+                ->where('source', 'manual')
+                ->orderBy('display_order')
+                ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at']);
+        }
 
         return response()->json(['notifications' => $notifications]);
     }

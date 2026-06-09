@@ -20,20 +20,32 @@ class WebhookController extends Controller
         $data = $request->all();
 
         // Get customer info
-        $firstName  = $data['billing']['first_name'] ?? 'Someone';
-        $city       = $data['billing']['city'] ?? null;
-        $country    = $data['billing']['country'] ?? null;
+        $firstName   = $data['billing']['first_name'] ?? null;
+        $lastName    = $data['billing']['last_name'] ?? null;
+        $city        = $data['billing']['city'] ?? null;
+        $country     = $data['billing']['country'] ?? null;
 
-        // Get product name
-        $productName = 'a product';
-        if (!empty($data['line_items'])) {
-            $productName = $data['line_items'][0]['name'] ?? 'a product';
+        // Build customer name
+        $customerName = 'Someone';
+        if ($firstName) {
+            $customerName = $firstName;
+            if ($lastName) {
+                $customerName .= ' ' . substr($lastName, 0, 1) . '.';
+            }
         }
 
-        // Build message
-        $message = $firstName . ' just purchased ' . $productName;
+        // Get product name from first line item
+        $productName = 'a product';
+        if (!empty($data['line_items']) && is_array($data['line_items'])) {
+            $productName = $data['line_items'][0]['name'] 
+                ?? $data['line_items'][0]['product_name'] 
+                ?? 'a product';
+        }
 
-        // Save as notification
+        // Build natural message
+        $message = $customerName . ' just purchased ' . $productName;
+
+        // Save as notification with source = woocommerce
         Notification::create([
             'website_id'    => $website->id,
             'type'          => 'purchase',
@@ -43,6 +55,7 @@ class WebhookController extends Controller
             'emoji'         => '🛒',
             'is_active'     => true,
             'display_order' => 0,
+            'source'        => 'woocommerce',
         ]);
 
         return response()->json(['ok' => true]);

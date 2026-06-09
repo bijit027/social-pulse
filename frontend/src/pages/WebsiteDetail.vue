@@ -89,43 +89,106 @@
             </div>
           </el-card>
 
-          <!-- Notifications List -->
+          <!-- Notifications List with Tabs -->
           <el-card class="notifications-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <span>Notifications</span>
-                <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Notification</el-button>
-              </div>
-            </template>
-
-            <el-empty v-if="analytics.notifications.length === 0" description="No notifications yet. Add your first one!">
-              <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Notification</el-button>
-            </el-empty>
-
-            <div v-else class="notifications-list">
-              <el-card v-for="notification in analytics.notifications" :key="notification.id" 
-                       :class="['notification-card', 'border-' + notification.type]" shadow="never">
-                <div class="notification-content">
-                  <div class="notification-left">
-                    <div class="emoji-circle">{{ notification.emoji }}</div>
-                    <div class="notification-text">
-                      <h3>{{ notification.message }}</h3>
-                      <el-tag :type="getNotificationTypeTag(notification.type)">{{ notification.type }}</el-tag>
-                    </div>
+            <el-tabs v-model="activeTab" class="notification-tabs">
+              <!-- Auto Notifications Tab -->
+              <el-tab-pane :name="'auto'">
+                <template #label>
+                  <span class="tab-label">
+                    Auto Notifications
+                    <el-badge :value="autoNotifications.length" :max="99" class="tab-badge" />
+                  </span>
+                </template>
+                <template #header>
+                  <div class="card-header">
+                    <span>Auto Notifications</span>
+                    <el-tag type="success" effect="dark">Live</el-tag>
                   </div>
-                  <div class="notification-right">
-                    <el-tag type="primary">{{ notification.total_displays }} shown</el-tag>
-                    <p class="last-shown">Last shown: {{ formatLastShown(notification.last_shown) }}</p>
-                    <div class="notification-actions">
-                      <el-button :type="notification.is_active ? 'success' : 'info'" size="small" @click="toggleNotification(notification)">
-                        {{ notification.is_active ? 'Active' : 'Inactive' }}
+                </template>
+                
+                <el-alert v-if="autoNotifications.length === 0" type="info" :closable="false" class="auto-empty-alert">
+                  <div class="auto-empty-content">
+                    <p>No automatic notifications yet. Connect your WooCommerce store using the webhook URL below. Real purchases will appear here automatically.</p>
+                    <div class="webhook-url-box">
+                      <el-input v-model="webhookUrl" readonly class="webhook-input" />
+                      <el-button type="primary" :icon="copiedWebhook ? Check : DocumentCopy" @click="copyWebhookUrl">
+                        {{ copiedWebhook ? 'Copied!' : 'Copy' }}
                       </el-button>
-                      <el-button type="danger" size="small" :icon="Delete" @click="deleteNotification(notification.id)">Delete</el-button>
                     </div>
                   </div>
+                </el-alert>
+
+                <div v-else class="notifications-list">
+                  <el-card v-for="notification in autoNotifications" :key="notification.id" 
+                           class="notification-card auto-card" shadow="never">
+                    <div class="notification-content">
+                      <div class="notification-left">
+                        <div class="emoji-circle">{{ notification.emoji }}</div>
+                        <div class="notification-text">
+                          <h3>{{ notification.message }}</h3>
+                          <el-tag type="success" size="small">woocommerce</el-tag>
+                          <p class="location">{{ notification.city }}{{ notification.country ? ', ' + notification.country : '' }}</p>
+                        </div>
+                      </div>
+                      <div class="notification-right">
+                        <el-tag type="primary">{{ notification.total_displays }} shown</el-tag>
+                        <p class="created-time">{{ formatRelativeTime(notification.created_at) }}</p>
+                        <div class="notification-actions">
+                          <el-button type="danger" size="small" :icon="Delete" @click="deleteNotification(notification.id)">Delete</el-button>
+                        </div>
+                      </div>
+                    </div>
+                  </el-card>
                 </div>
-              </el-card>
-            </div>
+              </el-tab-pane>
+
+              <!-- Manual Notifications Tab -->
+              <el-tab-pane :name="'manual'">
+                <template #label>
+                  <span class="tab-label">
+                    Manual Notifications
+                    <el-badge :value="manualNotifications.length" :max="99" class="tab-badge" />
+                  </span>
+                </template>
+                <template #header>
+                  <div class="card-header">
+                    <span>Manual Notifications</span>
+                    <el-tag type="info" effect="plain">Custom</el-tag>
+                    <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Notification</el-button>
+                  </div>
+                </template>
+
+                <el-empty v-if="manualNotifications.length === 0" description="No manual notifications yet. Add your first one!">
+                  <el-button type="primary" :icon="Plus" @click="showAddModal = true">Add Notification</el-button>
+                </el-empty>
+
+                <div v-else class="notifications-list">
+                  <el-card v-for="notification in manualNotifications" :key="notification.id" 
+                           :class="['notification-card', 'border-' + notification.type]" shadow="never">
+                    <div class="notification-content">
+                      <div class="notification-left">
+                        <div class="emoji-circle">{{ notification.emoji }}</div>
+                        <div class="notification-text">
+                          <h3>{{ notification.message }}</h3>
+                          <el-tag :type="getNotificationTypeTag(notification.type)">{{ notification.type }}</el-tag>
+                        </div>
+                      </div>
+                      <div class="notification-right">
+                        <el-tag type="primary">{{ notification.total_displays }} shown</el-tag>
+                        <p class="last-shown">Last shown: {{ formatLastShown(notification.last_shown) }}</p>
+                        <div class="notification-actions">
+                          <el-button :type="notification.is_active ? 'success' : 'info'" size="small" @click="toggleNotification(notification)">
+                            {{ notification.is_active ? 'Active' : 'Inactive' }}
+                          </el-button>
+                          <el-button type="danger" size="small" :icon="Delete" @click="deleteNotification(notification.id)">Delete</el-button>
+                        </div>
+                      </div>
+                    </div>
+                  </el-card>
+                </div>
+              </el-tab-pane>
+            </el-tabs>
           </el-card>
         </div>
       </el-main>
@@ -197,6 +260,8 @@ export default {
       adding: false,
       addError: '',
       copied: false,
+      activeTab: 'auto',
+      copiedWebhook: false,
       newNotification: {
         type: 'purchase',
         message: '',
@@ -204,6 +269,18 @@ export default {
         country: '',
         emoji: '🛒'
       }
+    }
+  },
+  computed: {
+    autoNotifications() {
+      return this.analytics.notifications.filter(n => n.source === 'woocommerce')
+    },
+    manualNotifications() {
+      return this.analytics.notifications.filter(n => n.source === 'manual')
+    },
+    webhookUrl() {
+      if (!this.website) return ''
+      return import.meta.env.VITE_API_URL.replace('/api', '') + '/api/webhook/woocommerce/' + this.website.pixel_id
     }
   },
   async mounted() {
@@ -278,6 +355,11 @@ export default {
       this.copied = true
       setTimeout(() => this.copied = false, 2000)
     },
+    copyWebhookUrl() {
+      navigator.clipboard.writeText(this.webhookUrl)
+      this.copiedWebhook = true
+      setTimeout(() => this.copiedWebhook = false, 2000)
+    },
     formatLastShown(date) {
       if (!date) return 'Never shown'
       
@@ -305,6 +387,22 @@ export default {
         review: 'warning'
       }
       return tagMap[type] || 'info'
+    },
+    formatRelativeTime(date) {
+      if (!date) return 'just now'
+      
+      const now = new Date()
+      const past = new Date(date)
+      const diffMs = now - past
+      const diffMins = Math.floor(diffMs / 60000)
+      const diffHours = Math.floor(diffMs / 3600000)
+      const diffDays = Math.floor(diffMs / 86400000)
+
+      if (diffMins < 1) return 'just now'
+      if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`
+      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+      if (diffDays === 1) return 'yesterday'
+      return `${diffDays} days ago`
     }
   }
 }
@@ -517,6 +615,55 @@ export default {
 .notification-actions {
   display: flex;
   gap: 0.5rem;
+}
+
+.notification-tabs {
+  margin-top: 1rem;
+}
+
+.tab-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tab-badge {
+  margin-left: 0.25rem;
+}
+
+.auto-empty-alert {
+  margin-bottom: 0;
+}
+
+.auto-empty-content p {
+  margin: 0 0 1rem 0;
+  color: var(--el-text-color-secondary);
+}
+
+.webhook-url-box {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.webhook-input {
+  flex: 1;
+}
+
+.auto-card {
+  border-left: 4px solid #67c23a;
+}
+
+.location {
+  color: var(--el-text-color-secondary);
+  font-size: 0.875rem;
+  margin: 0.5rem 0 0 0;
+}
+
+.created-time {
+  color: var(--el-text-color-secondary);
+  font-size: 0.75rem;
+  margin: 0;
 }
 
 @media (max-width: 768px) {

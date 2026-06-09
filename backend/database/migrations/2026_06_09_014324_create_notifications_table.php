@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('message');
             $table->string('city')->nullable();
             $table->string('country')->nullable();
-            $table->string('emoji')->default('🛒');
+            $table->string('emoji')->default('🛒')->nullable();
             $table->boolean('is_active')->default(true);
             $table->integer('display_order')->default(0);
             $table->timestamps();
