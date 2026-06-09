@@ -17,12 +17,6 @@ class WebsiteController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->canAddWebsite()) {
-            return response()->json([
-                'message' => 'You have reached your website limit. Please upgrade.'
-            ], 403);
-        }
-
         $website = $user->websites()->create($request->validated());
         return response()->json($website, 201);
     }
