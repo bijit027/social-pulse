@@ -21,6 +21,7 @@ Route::post('/visitor/{pixelId}/ping', [VisitorController::class, 'ping']);
 
 // Public webhook endpoints
 Route::post('/webhook/woocommerce/{pixelId}', [WebhookController::class, 'woocommerce']);
+Route::post('/webhook/stripe/{pixelId}', [WebhookController::class, 'stripe']);
 
 // Auth endpoints
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');

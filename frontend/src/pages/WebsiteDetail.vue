@@ -114,7 +114,7 @@
                           <div class="emoji-circle">{{ notification.emoji }}</div>
                           <div class="notification-text">
                             <h3>{{ notification.message }}</h3>
-                            <el-tag type="success" size="small">woocommerce</el-tag>
+                            <el-tag :type="getSourceTag(notification.source)" size="small">{{ getSourceLabel(notification.source) }}</el-tag>
                             <p class="location">{{ notification.city }}{{ notification.country ? ', ' + notification.country : '' }}</p>
                           </div>
                         </div>
@@ -172,48 +172,121 @@
                 <p>Connect services that automatically generate notifications.</p>
               </div>
 
-              <div class="sources-grid">
-                <el-card class="source-card" shadow="hover">
-                  <div class="source-header">
-                    <h3>WooCommerce</h3>
-                    <el-tag type="success">Connected</el-tag>
-                  </div>
-                  <p class="source-description">Receive purchase events automatically.</p>
-                  <div class="webhook-section">
-                    <label>Webhook URL</label>
-                    <div class="webhook-url-box">
-                      <el-input v-model="webhookUrl" readonly class="webhook-input" />
-                      <el-button type="primary" :icon="copiedWebhook ? Check : DocumentCopy" @click="copyWebhookUrl">
-                        {{ copiedWebhook ? 'Copied!' : 'Copy' }}
-                      </el-button>
+              <el-tabs v-model="sourceTab" class="source-tabs">
+                <!-- WooCommerce Tab -->
+                <el-tab-pane label="WooCommerce" name="woocommerce">
+                  <el-card class="platform-card" shadow="hover">
+                    <template #header>
+                      <div class="platform-header">
+                        <div class="platform-info">
+                          <span class="platform-icon">🛒</span>
+                          <h3>WooCommerce</h3>
+                        </div>
+                        <el-tag type="success">Connected</el-tag>
+                      </div>
+                    </template>
+                    <div class="platform-content">
+                      <h4>Setup Instructions</h4>
+                      <ol class="setup-steps">
+                        <li>Go to your WooCommerce dashboard</li>
+                        <li>Navigate to Settings → Webhooks</li>
+                        <li>Click "Add webhook"</li>
+                        <li>Name: SocialPulse Notifications</li>
+                        <li>Status: Active</li>
+                        <li>Topic: Order created</li>
+                        <li>Delivery URL: Copy the URL below</li>
+                        <li>Save the webhook</li>
+                      </ol>
+                      <div class="webhook-section">
+                        <label>Webhook URL</label>
+                        <div class="webhook-url-box">
+                          <el-input v-model="wooCommerceWebhookUrl" readonly class="webhook-input" />
+                          <el-button type="primary" :icon="copiedWooCommerce ? Check : DocumentCopy" @click="copyWooCommerceWebhook">
+                            {{ copiedWooCommerce ? 'Copied!' : 'Copy' }}
+                          </el-button>
+                        </div>
+                      </div>
+                      <el-link href="https://woocommerce.com/document/webhooks/" target="_blank" type="primary">
+                        View WooCommerce Documentation →
+                      </el-link>
                     </div>
-                  </div>
-                </el-card>
+                  </el-card>
+                </el-tab-pane>
 
-                <el-card class="source-card" shadow="hover">
-                  <div class="source-header">
-                    <h3>Stripe</h3>
-                    <el-tag type="info">Coming Soon</el-tag>
-                  </div>
-                  <p class="source-description">Receive payment events.</p>
-                </el-card>
+                <!-- Stripe Tab -->
+                <el-tab-pane label="Stripe" name="stripe">
+                  <el-card class="platform-card" shadow="hover">
+                    <template #header>
+                      <div class="platform-header">
+                        <div class="platform-info">
+                          <span class="platform-icon">💳</span>
+                          <h3>Stripe</h3>
+                        </div>
+                        <el-tag type="success">Connected</el-tag>
+                      </div>
+                    </template>
+                    <div class="platform-content">
+                      <h4>Setup Instructions</h4>
+                      <ol class="setup-steps">
+                        <li>Go to your Stripe dashboard</li>
+                        <li>Navigate to Developers → Webhooks</li>
+                        <li>Click "Add endpoint"</li>
+                        <li>Endpoint URL: Copy the URL below</li>
+                        <li>Select events to send: checkout.session.completed, payment_intent.succeeded, charge.succeeded</li>
+                        <li>Click "Add endpoint"</li>
+                      </ol>
+                      <div class="webhook-section">
+                        <label>Webhook URL</label>
+                        <div class="webhook-url-box">
+                          <el-input v-model="stripeWebhookUrl" readonly class="webhook-input" />
+                          <el-button type="primary" :icon="copiedStripe ? Check : DocumentCopy" @click="copyStripeWebhook">
+                            {{ copiedStripe ? 'Copied!' : 'Copy' }}
+                          </el-button>
+                        </div>
+                      </div>
+                      <el-link href="https://stripe.com/docs/webhooks" target="_blank" type="primary">
+                        View Stripe Documentation →
+                      </el-link>
+                    </div>
+                  </el-card>
+                </el-tab-pane>
 
-                <el-card class="source-card" shadow="hover">
-                  <div class="source-header">
-                    <h3>Shopify</h3>
-                    <el-tag type="info">Coming Soon</el-tag>
-                  </div>
-                  <p class="source-description">Connect your Shopify store.</p>
-                </el-card>
+                <!-- SureCart Tab -->
+                <el-tab-pane label="SureCart" name="surecart">
+                  <el-card class="platform-card" shadow="hover">
+                    <template #header>
+                      <div class="platform-header">
+                        <div class="platform-info">
+                          <span class="platform-icon">🛍️</span>
+                          <h3>SureCart</h3>
+                        </div>
+                        <el-tag type="info">Coming Soon</el-tag>
+                      </div>
+                    </template>
+                    <div class="platform-content">
+                      <el-empty description="SureCart integration coming soon" />
+                    </div>
+                  </el-card>
+                </el-tab-pane>
 
-                <el-card class="source-card" shadow="hover">
-                  <div class="source-header">
-                    <h3>Custom Webhook</h3>
-                    <el-tag type="info">Coming Soon</el-tag>
-                  </div>
-                  <p class="source-description">Connect any platform.</p>
-                </el-card>
-              </div>
+                <!-- EDD Tab -->
+                <el-tab-pane label="EDD" name="edd">
+                  <el-card class="platform-card" shadow="hover">
+                    <template #header>
+                      <div class="platform-header">
+                        <div class="platform-info">
+                          <span class="platform-icon">📦</span>
+                          <h3>Easy Digital Downloads</h3>
+                        </div>
+                        <el-tag type="info">Coming Soon</el-tag>
+                      </div>
+                    </template>
+                    <div class="platform-content">
+                      <el-empty description="Easy Digital Downloads integration coming soon" />
+                    </div>
+                  </el-card>
+                </el-tab-pane>
+              </el-tabs>
             </div>
           </el-tab-pane>
 
@@ -538,7 +611,12 @@ export default {
       copied: false,
       activeTab: 'overview',
       notificationTab: 'auto',
+      sourceTab: 'woocommerce',
       copiedWebhook: false,
+      copiedWooCommerce: false,
+      copiedStripe: false,
+      wooCommerceWebhookUrl: '',
+      stripeWebhookUrl: '',
       widgetSettings: {
         position: 'bottom-right',
         theme: 'light'
@@ -576,7 +654,7 @@ export default {
   },
   computed: {
     autoNotifications() {
-      return this.analytics.notifications.filter(n => n.source === 'woocommerce')
+      return this.analytics.notifications.filter(n => n.source === 'woocommerce' || n.source === 'stripe')
     },
     manualNotifications() {
       return this.analytics.notifications.filter(n => n.source === 'manual')
@@ -584,6 +662,14 @@ export default {
     webhookUrl() {
       if (!this.website) return ''
       return import.meta.env.VITE_API_URL.replace('/api', '') + '/api/webhook/woocommerce/' + this.website.pixel_id
+    },
+    wooCommerceWebhookUrl() {
+      if (!this.website) return ''
+      return import.meta.env.VITE_API_URL.replace('/api', '') + '/api/webhook/woocommerce/' + this.website.pixel_id
+    },
+    stripeWebhookUrl() {
+      if (!this.website) return ''
+      return import.meta.env.VITE_API_URL.replace('/api', '') + '/api/webhook/stripe/' + this.website.pixel_id
     }
   },
   async mounted() {
@@ -737,6 +823,16 @@ export default {
       this.copiedWebhook = true
       setTimeout(() => this.copiedWebhook = false, 2000)
     },
+    copyWooCommerceWebhook() {
+      navigator.clipboard.writeText(this.wooCommerceWebhookUrl)
+      this.copiedWooCommerce = true
+      setTimeout(() => this.copiedWooCommerce = false, 2000)
+    },
+    copyStripeWebhook() {
+      navigator.clipboard.writeText(this.stripeWebhookUrl)
+      this.copiedStripe = true
+      setTimeout(() => this.copiedStripe = false, 2000)
+    },
     formatLastShown(date) {
       if (!date) return 'Never shown'
       
@@ -768,6 +864,26 @@ export default {
         review: 'warning'
       }
       return tagMap[type] || 'info'
+    },
+    getSourceTag(source) {
+      const tagMap = {
+        stripe: 'danger',
+        woocommerce: 'success',
+        surecart: 'primary',
+        edd: 'warning',
+        manual: 'info'
+      }
+      return tagMap[source] || 'info'
+    },
+    getSourceLabel(source) {
+      const labelMap = {
+        stripe: 'Stripe',
+        woocommerce: 'WooCommerce',
+        surecart: 'SureCart',
+        edd: 'EDD',
+        manual: 'Manual'
+      }
+      return labelMap[source] || source
     },
     formatRelativeTime(date) {
       if (!date) return 'just now'
@@ -986,6 +1102,69 @@ export default {
 
 .webhook-input {
   flex: 1;
+}
+
+.source-tabs {
+  margin-top: 1rem;
+}
+
+.platform-card {
+  border-radius: 12px;
+}
+
+.platform-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.platform-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.platform-icon {
+  font-size: 1.5rem;
+}
+
+.platform-header h3 {
+  margin: 0;
+  color: var(--el-text-color-primary);
+  font-weight: 600;
+}
+
+.platform-content {
+  padding: 1rem 0;
+}
+
+.platform-content h4 {
+  margin: 0 0 1rem 0;
+  color: var(--el-text-color-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.setup-steps {
+  margin: 0 0 1.5rem 0;
+  padding-left: 1.25rem;
+  color: var(--el-text-color-regular);
+  line-height: 1.6;
+}
+
+.setup-steps li {
+  margin-bottom: 0.5rem;
+}
+
+.webhook-section {
+  margin: 1.5rem 0;
+}
+
+.webhook-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--el-text-color-regular);
+  font-weight: 500;
 }
 
 .live-visitors-card {

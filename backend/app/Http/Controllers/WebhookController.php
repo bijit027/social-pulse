@@ -114,6 +114,137 @@ class WebhookController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function stripe(Request $request, string $pixelId)
+    {
+        \Log::info('Stripe Webhook RAW DATA:', $request->all());
+
+        $website = Website::where('pixel_id', $pixelId)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$website) {
+            return response()->json(['ok' => false], 404);
+        }
+
+        $data = $request->all();
+
+        // Stripe sends different event types
+        // We only care about successful payments
+        $eventType = $data['type'] ?? '';
+
+        // Handle these Stripe events:
+        // payment_intent.succeeded
+        // checkout.session.completed
+        // charge.succeeded
+
+        if (!in_array($eventType, [
+            'payment_intent.succeeded',
+            'checkout.session.completed',
+            'charge.succeeded',
+        ])) {
+            return response()->json(['ok' => true]);
+        }
+
+        $object = $data['data']['object'] ?? [];
+
+        // Extract customer info based on event type
+        $firstName   = null;
+        $lastName    = null;
+        $city        = null;
+        $countryCode = null;
+        $productName = null;
+        $productUrl  = null;
+        $amount      = null;
+
+        if ($eventType === 'checkout.session.completed') {
+            // Best event — has most data
+            $firstName = $object['customer_details']['name'] 
+                ? explode(' ', $object['customer_details']['name'])[0] 
+                : null;
+
+            $lastName = $object['customer_details']['name']
+                ? implode(' ', array_slice(
+                    explode(' ', $object['customer_details']['name']), 1
+                  ))
+                : null;
+
+            $city        = $object['customer_details']['address']['city'] ?? null;
+            $countryCode = $object['customer_details']['address']['country'] ?? null;
+            $amount      = isset($object['amount_total']) 
+                ? '$' . number_format($object['amount_total'] / 100, 2)
+                : null;
+
+            // Get product from line items if available
+            $productName = $object['metadata']['product_name'] 
+                ?? $object['description']
+                ?? null;
+
+        } elseif ($eventType === 'payment_intent.succeeded') {
+            $firstName   = $object['metadata']['customer_name'] 
+                ? explode(' ', $object['metadata']['customer_name'])[0]
+                : null;
+            $city        = $object['metadata']['city'] ?? null;
+            $countryCode = $object['shipping']['address']['country'] 
+                ?? $object['metadata']['country'] 
+                ?? null;
+            $productName = $object['metadata']['product_name']
+                ?? $object['description']
+                ?? null;
+            $amount      = isset($object['amount'])
+                ? '$' . number_format($object['amount'] / 100, 2)
+                : null;
+
+        } elseif ($eventType === 'charge.succeeded') {
+            $billingDetails = $object['billing_details'] ?? [];
+            $fullName       = $billingDetails['name'] ?? null;
+            $firstName      = $fullName 
+                ? explode(' ', $fullName)[0] 
+                : null;
+            $lastName       = $fullName
+                ? implode(' ', array_slice(explode(' ', $fullName), 1))
+                : null;
+            $city        = $billingDetails['address']['city'] ?? null;
+            $countryCode = $billingDetails['address']['country'] ?? null;
+            $productName = $object['description'] ?? null;
+            $amount      = isset($object['amount'])
+                ? '$' . number_format($object['amount'] / 100, 2)
+                : null;
+        }
+
+        // Build customer name
+        $customerName = 'Someone';
+        if ($firstName && $lastName) {
+            $customerName = $firstName . ' ' . substr($lastName, 0, 1) . '.';
+        } elseif ($firstName) {
+            $customerName = $firstName;
+        }
+
+        // Build message
+        if ($productName) {
+            $message = $customerName . ' just purchased ' . $productName;
+        } elseif ($amount) {
+            $message = $customerName . ' just made a ' . $amount . ' purchase';
+        } else {
+            $message = $customerName . ' just made a purchase';
+        }
+
+        $country = $this->getCountryName($countryCode ?? '');
+
+        Notification::create([
+            'website_id'    => $website->id,
+            'type'          => 'purchase',
+            'message'       => $message,
+            'city'          => $city,
+            'country'       => $country,
+            'emoji'         => '💳',
+            'is_active'     => true,
+            'display_order' => 0,
+            'source'        => 'stripe',
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
     private function getCountryName(string $code): string
     {
         $countries = [
