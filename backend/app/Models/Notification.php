@@ -7,7 +7,7 @@ class Notification extends Model
 {
     protected $fillable = [
         'website_id', 'type', 'message',
-        'city', 'country', 'emoji',
+        'city', 'country', 'emoji', 'product_url',
         'is_active', 'display_order', 'source'
     ];
 

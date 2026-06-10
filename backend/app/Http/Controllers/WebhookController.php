@@ -9,7 +9,6 @@ class WebhookController extends Controller
 {
     public function woocommerce(Request $request, string $pixelId)
     {
-        // Log everything WooCommerce sends
         \Log::info('WooCommerce Webhook RAW DATA:', $request->all());
 
         $website = Website::where('pixel_id', $pixelId)
@@ -22,18 +21,16 @@ class WebhookController extends Controller
 
         $data = $request->all();
 
-        // Try multiple possible field locations for customer name
+        // Customer name
         $firstName = $data['billing']['first_name']
             ?? $data['shipping']['first_name']
-            ?? $data['customer']['first_name']
             ?? null;
 
         $lastName = $data['billing']['last_name']
             ?? $data['shipping']['last_name']
-            ?? $data['customer']['last_name']
             ?? null;
 
-        // Try multiple possible field locations for city/country
+        // Location
         $city = $data['billing']['city']
             ?? $data['shipping']['city']
             ?? null;
@@ -42,44 +39,62 @@ class WebhookController extends Controller
             ?? $data['shipping']['country']
             ?? null;
 
-        // Convert country code to full name
         $country = $this->getCountryName($countryCode ?? '');
 
-        // Try multiple possible field locations for product name
-        $productName = null;
-        $quantity = 1;
+        // Product details
+        $productName  = null;
+        $quantity     = 1;
+        $productUrl   = null;
+        $productImage = null;
 
         if (!empty($data['line_items']) && is_array($data['line_items'])) {
             $firstItem = $data['line_items'][0];
-            $productName = $firstItem['name']
+
+            $productName  = $firstItem['name']
                 ?? $firstItem['product_name']
                 ?? $firstItem['title']
                 ?? null;
+
             $quantity = $firstItem['quantity'] ?? 1;
+
+            // Product image
+            $productImage = $firstItem['image']['src'] ?? null;
+
+            // Build product URL from _links and product_id
+            $selfHref  = $data['_links']['self'][0]['href'] ?? '';
+            $scheme    = parse_url($selfHref, PHP_URL_SCHEME);
+            $host      = parse_url($selfHref, PHP_URL_HOST);
+            $siteUrl   = ($scheme && $host) ? $scheme . '://' . $host : null;
+
+            if (!$siteUrl) {
+                $domain  = $website->domain ?? '';
+                $siteUrl = str_starts_with($domain, 'http')
+                    ? $domain
+                    : 'https://' . $domain;
+            }
+
+            if (isset($firstItem['product_id'])) {
+                $productUrl = $siteUrl . '/?post_type=product&p=' 
+                    . $firstItem['product_id'];
+            }
         }
 
-        // Build customer display name
+        // Build customer name
         $customerName = 'Someone';
         if ($firstName && $lastName) {
-            // Show first name + last initial for privacy
             $customerName = $firstName . ' ' . substr($lastName, 0, 1) . '.';
         } elseif ($firstName) {
             $customerName = $firstName;
         }
 
-        // Build final message
+        // Build message
         if ($productName) {
-            if ($quantity > 1) {
-                $message = $customerName . ' just purchased ' . $quantity . 'x ' . $productName;
-            } else {
-                $message = $customerName . ' just purchased ' . $productName;
-            }
+            $message = $quantity > 1
+                ? $customerName . ' just purchased ' . $quantity . 'x ' . $productName
+                : $customerName . ' just purchased ' . $productName;
         } else {
             $message = $customerName . ' just made a purchase';
         }
-
-        // Build emoji based on product
-        $emoji = $this->getEmoji($data);
 
         // Save notification
         Notification::create([
@@ -88,7 +103,9 @@ class WebhookController extends Controller
             'message'       => $message,
             'city'          => $city,
             'country'       => $country,
-            'emoji'         => $emoji,
+            'emoji'         => $this->getEmoji($data),
+            'product_url'   => $productUrl,
+            'product_image' => $productImage,
             'is_active'     => true,
             'display_order' => 0,
             'source'        => 'woocommerce',

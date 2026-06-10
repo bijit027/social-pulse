@@ -1,4 +1,6 @@
 <?php
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\WebhookController;
@@ -9,6 +11,9 @@ use Illuminate\Support\Facades\Route;
 // Public widget endpoints
 Route::get('/widget/{pixelId}', [WidgetController::class, 'serve']);
 Route::post('/widget/{pixelId}/display', [WidgetController::class, 'trackDisplay']);
+
+// Public analytics endpoint (for widget click tracking)
+Route::post('/analytics/track', [AnalyticsController::class, 'track']);
 
 // Public webhook endpoints
 Route::post('/webhook/woocommerce/{pixelId}', [WebhookController::class, 'woocommerce']);
@@ -31,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/websites/{website}', [WebsiteController::class, 'destroy']);
     Route::get('/websites/{website}/snippet', [WebsiteController::class, 'snippet']);
     Route::get('/websites/{website}/analytics', [WebsiteController::class, 'analytics']);
+    Route::get('/websites/{website}/analytics/stats', [AnalyticsController::class, 'getStats']);
 
     // Notifications
     Route::get('/websites/{website}/notifications', [NotificationController::class, 'index']);

@@ -24,7 +24,7 @@ class WidgetController extends Controller
             ->where('created_at', '>=', now()->subHours(24))
             ->orderBy('created_at', 'desc')
             ->limit(10)
-            ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at']);
+            ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at', 'product_url']);
 
         // Fallback: if no recent webhook notifications, show manual ones
         if ($notifications->isEmpty()) {
@@ -32,7 +32,7 @@ class WidgetController extends Controller
                 ->where('is_active', true)
                 ->where('source', 'manual')
                 ->orderBy('display_order')
-                ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at']);
+                ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at', 'product_url']);
         }
 
         $displaySettings = [
@@ -57,7 +57,11 @@ class WidgetController extends Controller
             'accent_color' => $website->accent_color ?? '#FF6B35',
         ];
 
-        return response()->json(['notifications' => $notifications, 'display_settings' => $displaySettings, 'theme_settings' => $themeSettings]);
+        return response()->json([
+            'notifications' => $notifications, 
+            'display_settings' => $displaySettings, 
+            'theme_settings' => $themeSettings
+        ]);
     }
 
     public function trackDisplay(Request $request, string $pixelId)

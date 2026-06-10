@@ -277,22 +277,22 @@
               <el-row :gutter="20" class="stats-row">
                 <el-col :span="6">
                   <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="Total Views" :value="analytics.summary?.total_views || 0" />
+                  </el-card>
+                </el-col>
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="Total Clicks" :value="analytics.summary?.total_clicks || 0" />
+                  </el-card>
+                </el-col>
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
+                    <el-statistic title="CTR" :value="analytics.summary?.ctr || 0" suffix="%" />
+                  </el-card>
+                </el-col>
+                <el-col :span="6">
+                  <el-card shadow="hover" class="stat-card">
                     <el-statistic title="Total Displays" :value="analytics.total_displays" />
-                  </el-card>
-                </el-col>
-                <el-col :span="6">
-                  <el-card shadow="hover" class="stat-card">
-                    <el-statistic title="Today's Displays" :value="analytics.displays_today" />
-                  </el-card>
-                </el-col>
-                <el-col :span="6">
-                  <el-card shadow="hover" class="stat-card">
-                    <el-statistic title="Weekly Displays" :value="analytics.displays_this_week" />
-                  </el-card>
-                </el-col>
-                <el-col :span="6">
-                  <el-card shadow="hover" class="stat-card">
-                    <el-statistic title="Monthly Displays" :value="analytics.displays_this_week * 4" />
                   </el-card>
                 </el-col>
               </el-row>
@@ -614,6 +614,11 @@ export default {
       try {
         const response = await api.get(`/websites/${this.$route.params.id}/analytics`)
         this.analytics = response.data
+        
+        // Fetch click stats
+        const statsResponse = await api.get(`/websites/${this.$route.params.id}/analytics/stats`)
+        this.analytics.stats = statsResponse.data.stats
+        this.analytics.summary = statsResponse.data.summary
       } catch (err) {
         console.error('Failed to fetch analytics:', err)
       } finally {
