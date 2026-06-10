@@ -10,7 +10,8 @@ return [
         'http://127.0.0.1:5174',
         'http://localhost:9000',
         'https://social-pulse-730bi47hv-bijit-deb-s-projects.vercel.app',
-        'https://social-pulse-ebon.vercel.app'
+        'https://social-pulse-ebon.vercel.app',
+        'https://*.s6-tastewp.com',
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers'     => ['*'],
