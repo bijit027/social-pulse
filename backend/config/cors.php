@@ -9,7 +9,8 @@ return [
         'http://127.0.0.1:5173',
         'http://127.0.0.1:5174',
         'http://localhost:9000',
-        'https://social-pulse-730bi47hv-bijit-deb-s-projects.vercel.app'
+        'https://social-pulse-730bi47hv-bijit-deb-s-projects.vercel.app',
+        'https://social-pulse-ebon.vercel.app'
     ],
     'allowed_origins_patterns' => [],
     'allowed_headers'     => ['*'],
