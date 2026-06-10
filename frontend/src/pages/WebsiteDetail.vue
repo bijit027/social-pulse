@@ -275,24 +275,34 @@
               </div>
 
               <el-row :gutter="20" class="stats-row">
-                <el-col :span="6">
+                <el-col :span="4">
                   <el-card shadow="hover" class="stat-card">
                     <el-statistic title="Total Views" :value="analytics.summary?.total_views || 0" />
                   </el-card>
                 </el-col>
-                <el-col :span="6">
+                <el-col :span="4">
                   <el-card shadow="hover" class="stat-card">
                     <el-statistic title="Total Clicks" :value="analytics.summary?.total_clicks || 0" />
                   </el-card>
                 </el-col>
-                <el-col :span="6">
+                <el-col :span="4">
                   <el-card shadow="hover" class="stat-card">
                     <el-statistic title="CTR" :value="analytics.summary?.ctr || 0" suffix="%" />
                   </el-card>
                 </el-col>
-                <el-col :span="6">
+                <el-col :span="4">
                   <el-card shadow="hover" class="stat-card">
                     <el-statistic title="Total Displays" :value="analytics.total_displays" />
+                  </el-card>
+                </el-col>
+                <el-col :span="4">
+                  <el-card shadow="hover" class="stat-card live-visitors-card">
+                    <el-tooltip content="Visitors active in last 5 minutes" placement="top">
+                      <div class="live-visitors-content">
+                        <span class="live-dot"></span>
+                        <el-statistic title="Live Visitors" :value="analytics.active_visitors || 0" />
+                      </div>
+                    </el-tooltip>
                   </el-card>
                 </el-col>
               </el-row>
@@ -582,6 +592,9 @@ export default {
       this.fetchAnalytics(),
       this.fetchSnippet()
     ])
+    
+    // Start live visitors refresh
+    this.startLiveVisitorsRefresh()
   },
   methods: {
     async fetchWebsite() {
@@ -771,6 +784,18 @@ export default {
       if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
       if (diffDays === 1) return 'yesterday'
       return `${diffDays} days ago`
+    },
+    startLiveVisitorsRefresh() {
+      // Refresh live visitors every 30 seconds
+      this.liveVisitorsInterval = setInterval(() => {
+        this.fetchAnalytics()
+      }, 30000)
+    }
+  },
+  beforeUnmount() {
+    // Clear interval when component is destroyed
+    if (this.liveVisitorsInterval) {
+      clearInterval(this.liveVisitorsInterval)
     }
   }
 }
@@ -961,6 +986,36 @@ export default {
 
 .webhook-input {
   flex: 1;
+}
+
+.live-visitors-card {
+  border: 2px solid #22c55e;
+}
+
+.live-visitors-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
 }
 
 .auto-card {

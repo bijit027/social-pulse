@@ -3,6 +3,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\WidgetController;
@@ -14,6 +15,9 @@ Route::post('/widget/{pixelId}/display', [WidgetController::class, 'trackDisplay
 
 // Public analytics endpoint (for widget click tracking)
 Route::post('/analytics/track', [AnalyticsController::class, 'track']);
+
+// Public visitor tracking endpoint
+Route::post('/visitor/{pixelId}/ping', [VisitorController::class, 'ping']);
 
 // Public webhook endpoints
 Route::post('/webhook/woocommerce/{pixelId}', [WebhookController::class, 'woocommerce']);

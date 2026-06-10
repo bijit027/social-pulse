@@ -8,6 +8,9 @@
   fetch(apiUrl + '/api/widget/' + pixelId)
     .then(function (res) { return res.json(); })
     .then(function (data) {
+      // Start visitor ping regardless of notifications
+      startVisitorPing(apiUrl, pixelId);
+      
       if (!data.notifications || !data.notifications.length) return;
       initWidget(data.notifications, data.display_settings || {}, data.theme_settings || {}, apiUrl, pixelId);
     })
@@ -205,5 +208,70 @@
     document.head.appendChild(style);
 
     setTimeout(show, 3000);
+  }
+
+  function startVisitorPing(apiUrl, pixelId) {
+    var currentPage = window.location.pathname;
+    
+    function ping() {
+      fetch(apiUrl + '/api/visitor/' + pixelId + '/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          page_url: currentPage 
+        }),
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.page_visitors > 1) {
+          showVisitorCount(data.page_visitors);
+        } else {
+          hideVisitorCount();
+        }
+      })
+      .catch(function() {});
+    }
+    
+    // Ping immediately then every 30 seconds
+    ping();
+    setInterval(ping, 30000);
+  }
+
+  function showVisitorCount(count) {
+    var existing = document.getElementById('sp-visitor-count');
+    if (existing) {
+      existing.querySelector('.sp-count').textContent = count;
+      return;
+    }
+    
+    var el = document.createElement('div');
+    el.id = 'sp-visitor-count';
+    el.style.cssText = 'position:fixed;bottom:20px;right:20px;' +
+        'z-index:2147483647;background:#1e1b4b;color:#fff;' +
+        'padding:8px 14px;border-radius:50px;font-size:12px;' +
+        'font-family:-apple-system,BlinkMacSystemFont,sans-serif;' +
+        'box-shadow:0 4px 12px rgba(0,0,0,0.15);' +
+        'display:flex;align-items:center;gap:6px;';
+    el.innerHTML = 
+        '<span style="width:8px;height:8px;background:#22c55e;' +
+        'border-radius:50%;display:inline-block;' +
+        'animation:sp-pulse 2s infinite;"></span>' +
+        '<span class="sp-count">' + count + '</span>' +
+        '<span> people viewing</span>';
+    document.body.appendChild(el);
+    
+    // Add pulse animation
+    var style = document.createElement('style');
+    style.textContent = 
+        '@keyframes sp-pulse{' +
+        '0%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)}' +
+        '70%{box-shadow:0 0 0 6px rgba(34,197,94,0)}' +
+        '100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}}';
+    document.head.appendChild(style);
+  }
+
+  function hideVisitorCount() {
+    var el = document.getElementById('sp-visitor-count');
+    if (el) el.style.display = 'none';
   }
 })();

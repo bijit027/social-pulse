@@ -94,11 +94,19 @@ class WebsiteController extends Controller
             ->where('displayed_at', '>=', now()->startOfDay())
             ->count();
 
+        // Get active visitors
+        $activeVisitors = \App\Models\VisitorSession::getActiveCount(
+            $website->id,
+            null,
+            5
+        );
+
         return response()->json([
             'total_displays'     => $totalDisplays,
             'displays_this_week' => $thisWeek,
             'displays_today'     => $today,
             'notifications'      => $notifications,
+            'active_visitors'    => $activeVisitors,
         ]);
     }
 }
