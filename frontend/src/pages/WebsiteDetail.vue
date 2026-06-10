@@ -616,9 +616,13 @@ export default {
         this.analytics = response.data
         
         // Fetch click stats
-        const statsResponse = await api.get(`/websites/${this.$route.params.id}/analytics/stats`)
-        this.analytics.stats = statsResponse.data.stats
-        this.analytics.summary = statsResponse.data.summary
+        try {
+          const statsResponse = await api.get(`/websites/${this.$route.params.id}/analytics/stats`)
+          this.analytics.summary = statsResponse.data.summary
+        } catch (statsErr) {
+          console.error('Failed to fetch click stats (migration may not be run):', statsErr)
+          this.analytics.summary = { total_views: 0, total_clicks: 0, ctr: 0 }
+        }
       } catch (err) {
         console.error('Failed to fetch analytics:', err)
       } finally {
