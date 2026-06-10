@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/websites', [WebsiteController::class, 'store'])->middleware('throttle:10,1');
     Route::get('/websites/{website}', [WebsiteController::class, 'show']);
     Route::put('/websites/{website}', [WebsiteController::class, 'update']);
+    Route::patch('/websites/{website}', [WebsiteController::class, 'update']);
     Route::delete('/websites/{website}', [WebsiteController::class, 'destroy']);
     Route::get('/websites/{website}/snippet', [WebsiteController::class, 'snippet']);
     Route::get('/websites/{website}/analytics', [WebsiteController::class, 'analytics']);

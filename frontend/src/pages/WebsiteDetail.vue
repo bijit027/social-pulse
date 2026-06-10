@@ -339,6 +339,61 @@
                 </el-descriptions>
               </el-card>
 
+              <el-card class="settings-card" shadow="hover">
+                <template #header>
+                  <div class="card-header">
+                    <span>Display Rules</span>
+                  </div>
+                </template>
+                <el-form label-position="top" :model="displaySettings">
+                  <el-form-item label="Display Duration (seconds)">
+                    <el-input-number v-model="displaySettings.display_for" :min="1" :max="60" style="width: 100%" />
+                    <div class="form-help">How long each notification displays</div>
+                  </el-form-item>
+                  <el-form-item label="Max Notifications">
+                    <el-input-number v-model="displaySettings.display_last" :min="1" :max="50" style="width: 100%" />
+                    <div class="form-help">Maximum number of notifications to show</div>
+                  </el-form-item>
+                  <el-form-item label="Display From Last">
+                    <el-row :gutter="10">
+                      <el-col :span="8">
+                        <el-input-number v-model="displaySettings.display_from_days" :min="0" :max="365" placeholder="Days" style="width: 100%" />
+                      </el-col>
+                      <el-col :span="8">
+                        <el-input-number v-model="displaySettings.display_from_hours" :min="0" :max="23" placeholder="Hours" style="width: 100%" />
+                      </el-col>
+                      <el-col :span="8">
+                        <el-input-number v-model="displaySettings.display_from_minutes" :min="0" :max="59" placeholder="Minutes" style="width: 100%" />
+                      </el-col>
+                    </el-row>
+                    <div class="form-help">Show notifications from the last X days/hours/minutes</div>
+                  </el-form-item>
+                  <el-form-item label="Loop Notifications">
+                    <el-switch v-model="displaySettings.loop" />
+                    <div class="form-help">Loop notifications continuously</div>
+                  </el-form-item>
+                  <el-form-item label="Open Links in New Tab">
+                    <el-switch v-model="displaySettings.link_open" />
+                  </el-form-item>
+                  <el-form-item label="Show For">
+                    <el-select v-model="displaySettings.show_on_display" style="width: 100%">
+                      <el-option label="Always" value="always" />
+                      <el-option label="Logged Out Users" value="logged_out_user" />
+                      <el-option label="Logged In Users" value="logged_in_user" />
+                    </el-select>
+                  </el-form-item>
+                  <el-form-item label="Show Close Button">
+                    <el-switch v-model="displaySettings.close_button" />
+                  </el-form-item>
+                  <el-form-item label="Hide on Mobile">
+                    <el-switch v-model="displaySettings.hide_on_mobile" />
+                  </el-form-item>
+                  <el-form-item>
+                    <el-button type="primary" :loading="savingDisplaySettings" @click="saveDisplaySettings">Save Display Settings</el-button>
+                  </el-form-item>
+                </el-form>
+              </el-card>
+
               <el-card class="danger-card" shadow="hover">
                 <template #header>
                   <div class="card-header">
@@ -392,6 +447,7 @@
 import api from '../services/api'
 import Sidebar from '../components/Sidebar.vue'
 import { View, Calendar, Lightning, Plus, DocumentCopy, Check, Delete, Bell } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 export default {
   name: 'WebsiteDetail',
@@ -428,6 +484,19 @@ export default {
         position: 'bottom-right',
         theme: 'light'
       },
+      displaySettings: {
+        display_for: 5,
+        display_last: 20,
+        display_from_days: 30,
+        display_from_hours: 0,
+        display_from_minutes: 0,
+        loop: true,
+        link_open: false,
+        show_on_display: 'always',
+        close_button: true,
+        hide_on_mobile: false
+      },
+      savingDisplaySettings: false,
       newNotification: {
         type: 'purchase',
         message: '',
@@ -461,6 +530,17 @@ export default {
       try {
         const response = await api.get(`/websites/${this.$route.params.id}`)
         this.website = response.data
+        // Load display settings from website data
+        if (this.website.display_for !== undefined) this.displaySettings.display_for = this.website.display_for
+        if (this.website.display_last !== undefined) this.displaySettings.display_last = this.website.display_last
+        if (this.website.display_from_days !== undefined) this.displaySettings.display_from_days = this.website.display_from_days
+        if (this.website.display_from_hours !== undefined) this.displaySettings.display_from_hours = this.website.display_from_hours
+        if (this.website.display_from_minutes !== undefined) this.displaySettings.display_from_minutes = this.website.display_from_minutes
+        if (this.website.loop !== undefined) this.displaySettings.loop = this.website.loop
+        if (this.website.link_open !== undefined) this.displaySettings.link_open = this.website.link_open
+        if (this.website.show_on_display !== undefined) this.displaySettings.show_on_display = this.website.show_on_display
+        if (this.website.close_button !== undefined) this.displaySettings.close_button = this.website.close_button
+        if (this.website.hide_on_mobile !== undefined) this.displaySettings.hide_on_mobile = this.website.hide_on_mobile
       } catch (err) {
         console.error('Failed to fetch website:', err)
       }
@@ -491,7 +571,7 @@ export default {
         this.showAddModal = false
         this.newNotification = { type: 'purchase', message: '', city: '', country: '', emoji: '🛒' }
         await this.fetchAnalytics()
-        alert('Notification added!')
+        ElMessage.success('Notification added!')
       } catch (err) {
         this.addError = err.response?.data?.message || 'Failed to add notification'
       } finally {
@@ -503,27 +583,50 @@ export default {
         await api.patch(`/notifications/${notification.id}/toggle`)
         await this.fetchAnalytics()
       } catch (err) {
-        alert('Failed to toggle notification')
+        ElMessage.error('Failed to toggle notification')
       }
     },
     async deleteNotification(id) {
-      if (!confirm('Are you sure you want to delete this notification?')) return
-      
       try {
+        await ElMessageBox.confirm('Are you sure you want to delete this notification?', 'Confirm Delete', {
+          confirmButtonText: 'Delete',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        })
         await api.delete(`/notifications/${id}`)
         await this.fetchAnalytics()
+        ElMessage.success('Notification deleted')
       } catch (err) {
-        alert('Failed to delete notification')
+        if (err !== 'cancel') {
+          ElMessage.error('Failed to delete notification')
+        }
       }
     },
     async deleteSite() {
-      if (!confirm('Are you sure you want to delete this site? This action cannot be undone.')) return
-      
       try {
+        await ElMessageBox.confirm('Are you sure you want to delete this site? This action cannot be undone.', 'Confirm Delete', {
+          confirmButtonText: 'Delete',
+          cancelButtonText: 'Cancel',
+          type: 'warning'
+        })
         await api.delete(`/websites/${this.$route.params.id}`)
         this.$router.push('/sites')
+        ElMessage.success('Site deleted')
       } catch (err) {
-        alert('Failed to delete site')
+        if (err !== 'cancel') {
+          ElMessage.error('Failed to delete site')
+        }
+      }
+    },
+    async saveDisplaySettings() {
+      this.savingDisplaySettings = true
+      try {
+        await api.patch(`/websites/${this.$route.params.id}`, this.displaySettings)
+        ElMessage.success('Display settings saved successfully!')
+      } catch (err) {
+        ElMessage.error('Failed to save display settings')
+      } finally {
+        this.savingDisplaySettings = false
       }
     },
     copySnippet() {
@@ -900,6 +1003,12 @@ export default {
 
 .settings-card {
   border-radius: 12px;
+}
+
+.form-help {
+  font-size: 0.75rem;
+  color: var(--el-text-color-secondary);
+  margin-top: 0.25rem;
 }
 
 .danger-card {

@@ -8,7 +8,7 @@ return [
         'http://localhost:5175',
         'http://127.0.0.1:5173',
         'http://127.0.0.1:5174',
-        'http://localhost:9000',
+        'http://localhost:9001',
         'https://social-pulse-730bi47hv-bijit-deb-s-projects.vercel.app',
         'https://social-pulse-ebon.vercel.app',
         'https://*.s6-tastewp.com',

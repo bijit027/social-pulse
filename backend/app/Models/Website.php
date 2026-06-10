@@ -7,7 +7,9 @@ use Illuminate\Support\Str;
 class Website extends Model
 {
     protected $fillable = [
-        'user_id', 'name', 'domain', 'pixel_id', 'is_active'
+        'user_id', 'name', 'domain', 'pixel_id', 'is_active',
+        'display_for', 'display_last', 'display_from_days', 'display_from_hours', 'display_from_minutes',
+        'loop', 'link_open', 'show_on_display', 'close_button', 'hide_on_mobile'
     ];
 
     protected static function boot()
