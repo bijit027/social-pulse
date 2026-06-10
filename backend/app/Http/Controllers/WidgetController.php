@@ -48,7 +48,16 @@ class WidgetController extends Controller
             'hide_on_mobile' => $website->hide_on_mobile ?? false,
         ];
 
-        return response()->json(['notifications' => $notifications, 'display_settings' => $displaySettings]);
+        $themeSettings = [
+            'theme' => $website->theme ?? 'light',
+            'image_shape' => $website->image_shape ?? 'rounded',
+            'widget_position' => $website->widget_position ?? 'bottom-right',
+            'background_color' => $website->background_color ?? '#ffffff',
+            'text_color' => $website->text_color ?? '#1a1a1a',
+            'accent_color' => $website->accent_color ?? '#FF6B35',
+        ];
+
+        return response()->json(['notifications' => $notifications, 'display_settings' => $displaySettings, 'theme_settings' => $themeSettings]);
     }
 
     public function trackDisplay(Request $request, string $pixelId)

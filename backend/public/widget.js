@@ -9,7 +9,7 @@
     .then(function (res) { return res.json(); })
     .then(function (data) {
       if (!data.notifications || !data.notifications.length) return;
-      initWidget(data.notifications, data.display_settings || {}, apiUrl, pixelId);
+      initWidget(data.notifications, data.display_settings || {}, data.theme_settings || {}, apiUrl, pixelId);
     })
     .catch(function () {});
 
@@ -67,7 +67,7 @@
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   }
 
-  function initWidget(notifications, settings, apiUrl, pixelId) {
+  function initWidget(notifications, settings, themeSettings, apiUrl, pixelId) {
     // Check if should hide on mobile
     var hideOnMobile = settings.hide_on_mobile === true || settings.hide_on_mobile === 1 || settings.hide_on_mobile === '1';
     if (hideOnMobile && isMobile()) {
@@ -93,8 +93,39 @@
     var displayDuration = settings.display_for || 5; // default 5 seconds
     var shouldLoop = settings.loop !== false && settings.loop !== 0 && settings.loop !== '0';
 
+    // Theme settings
+    var theme = themeSettings.theme || 'light';
+    var imageShape = themeSettings.image_shape || 'rounded';
+    var widgetPosition = themeSettings.widget_position || 'bottom-right';
+    var backgroundColor = themeSettings.background_color || '#ffffff';
+    var textColor = themeSettings.text_color || '#1a1a1a';
+    var accentColor = themeSettings.accent_color || '#FF6B35';
+
+    // Calculate position styles
+    var positionStyles = {
+      'bottom-left': 'bottom:20px;left:20px;',
+      'bottom-right': 'bottom:20px;right:20px;',
+      'top-left': 'top:20px;left:20px;',
+      'top-right': 'top:20px;right:20px;'
+    };
+    var positionStyle = positionStyles[widgetPosition] || positionStyles['bottom-right'];
+
+    // Calculate image shape
+    var imageRadius = {
+      'rounded': '10px',
+      'square': '0px',
+      'circle': '50%'
+    };
+    var emojiRadius = imageRadius[imageShape] || imageRadius['rounded'];
+
+    // Dark theme adjustments
+    if (theme === 'dark') {
+      backgroundColor = themeSettings.background_color || '#1a1a1a';
+      textColor = themeSettings.text_color || '#ffffff';
+    }
+
     var container = document.createElement('div');
-    container.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:2147483647;font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:300px;display:none;';
+    container.style.cssText = 'position:fixed;' + positionStyle + 'z-index:2147483647;font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:300px;display:none;';
     document.body.appendChild(container);
 
     function show() {
@@ -107,15 +138,15 @@
                            settings.close_button !== 0 && 
                            settings.close_button !== '0';
       var closeButton = showCloseButton ? 
-        '<button onclick="this.closest(\'div\').parentElement.style.display=\'none\'" style="background:none;border:none;cursor:pointer;color:#ccc;font-size:18px;padding:0;line-height:1;">\u00D7</button>' : '';
+        '<button onclick="this.closest(\'div\').parentElement.style.display=\'none\'" style="background:none;border:none;cursor:pointer;color:' + textColor + ';font-size:18px;padding:0;line-height:1;">\u00D7</button>' : '';
 
       container.innerHTML =
-        '<div style="background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;animation:sp-slide-in 0.3s ease;">' +
-        '<span style="font-size:24px;">' + (n.emoji || '\u{1F6D2}') + '</span>' +
+        '<div style="background:' + backgroundColor + ';border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;animation:sp-slide-in 0.3s ease;">' +
+        '<span style="font-size:24px;border-radius:' + emojiRadius + ';">' + (n.emoji || '\u{1F6D2}') + '</span>' +
         '<div style="flex:1;">' +
-        '<div style="font-size:13px;font-weight:600;color:#1a1a1a;line-height:1.4;">' + n.message + '</div>' +
-        (n.city ? '<div style="font-size:11px;color:#888;margin-top:2px;">' + n.city + (n.country ? ', ' + n.country : '') + '</div>' : '') +
-        (n.created_at ? '<div style="font-size:10px;color:#aaa;margin-top:1px;">' + timeAgo(n.created_at) + '</div>' : '') +
+        '<div style="font-size:13px;font-weight:600;color:' + textColor + ';line-height:1.4;">' + n.message + '</div>' +
+        (n.city ? '<div style="font-size:11px;color:' + textColor + ';opacity:0.7;margin-top:2px;">' + n.city + (n.country ? ', ' + n.country : '') + '</div>' : '') +
+        (n.created_at ? '<div style="font-size:10px;color:' + textColor + ';opacity:0.5;margin-top:1px;">' + timeAgo(n.created_at) + '</div>' : '') +
         '</div>' +
         closeButton +
         '</div>';

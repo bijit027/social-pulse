@@ -41,6 +41,13 @@ class StoreWebsiteRequest extends FormRequest
             'show_on_display' => 'nullable|in:always,logged_out_user,logged_in_user',
             'close_button' => 'nullable|boolean',
             'hide_on_mobile' => 'nullable|boolean',
+            // Theme settings - always optional
+            'theme' => 'nullable|in:light,dark',
+            'image_shape' => 'nullable|in:rounded,square,circle',
+            'widget_position' => 'nullable|in:bottom-left,bottom-right,top-left,top-right',
+            'background_color' => 'nullable|string|max:7',
+            'text_color' => 'nullable|string|max:7',
+            'accent_color' => 'nullable|string|max:7',
         ];
     }
 }

@@ -394,6 +394,55 @@
                 </el-form>
               </el-card>
 
+              <el-card class="settings-card" shadow="hover">
+                <template #header>
+                  <div class="card-header">
+                    <span>Theme Settings</span>
+                  </div>
+                </template>
+                <el-form label-position="top" :model="themeSettings">
+                  <el-form-item label="Theme">
+                    <el-select v-model="themeSettings.theme" style="width: 100%">
+                      <el-option label="Light" value="light" />
+                      <el-option label="Dark" value="dark" />
+                    </el-select>
+                    <div class="form-help">Choose light or dark theme</div>
+                  </el-form-item>
+                  <el-form-item label="Image Shape">
+                    <el-select v-model="themeSettings.image_shape" style="width: 100%">
+                      <el-option label="Rounded" value="rounded" />
+                      <el-option label="Square" value="square" />
+                      <el-option label="Circle" value="circle" />
+                    </el-select>
+                    <div class="form-help">Shape of the emoji/icon</div>
+                  </el-form-item>
+                  <el-form-item label="Widget Position">
+                    <el-select v-model="themeSettings.widget_position" style="width: 100%">
+                      <el-option label="Bottom Left" value="bottom-left" />
+                      <el-option label="Bottom Right" value="bottom-right" />
+                      <el-option label="Top Left" value="top-left" />
+                      <el-option label="Top Right" value="top-right" />
+                    </el-select>
+                    <div class="form-help">Position of the widget on screen</div>
+                  </el-form-item>
+                  <el-form-item label="Background Color">
+                    <el-color-picker v-model="themeSettings.background_color" />
+                    <div class="form-help">Widget background color</div>
+                  </el-form-item>
+                  <el-form-item label="Text Color">
+                    <el-color-picker v-model="themeSettings.text_color" />
+                    <div class="form-help">Widget text color</div>
+                  </el-form-item>
+                  <el-form-item label="Accent Color">
+                    <el-color-picker v-model="themeSettings.accent_color" />
+                    <div class="form-help">Accent color for highlights</div>
+                  </el-form-item>
+                  <el-form-item>
+                    <el-button type="primary" :loading="savingThemeSettings" @click="saveThemeSettings">Save Theme Settings</el-button>
+                  </el-form-item>
+                </el-form>
+              </el-card>
+
               <el-card class="danger-card" shadow="hover">
                 <template #header>
                   <div class="card-header">
@@ -497,6 +546,15 @@ export default {
         hide_on_mobile: false
       },
       savingDisplaySettings: false,
+      themeSettings: {
+        theme: 'light',
+        image_shape: 'rounded',
+        widget_position: 'bottom-right',
+        background_color: '#ffffff',
+        text_color: '#1a1a1a',
+        accent_color: '#FF6B35'
+      },
+      savingThemeSettings: false,
       newNotification: {
         type: 'purchase',
         message: '',
@@ -541,6 +599,13 @@ export default {
         if (this.website.show_on_display !== undefined) this.displaySettings.show_on_display = this.website.show_on_display
         if (this.website.close_button !== undefined) this.displaySettings.close_button = this.website.close_button
         if (this.website.hide_on_mobile !== undefined) this.displaySettings.hide_on_mobile = this.website.hide_on_mobile
+        // Load theme settings from website data
+        if (this.website.theme !== undefined) this.themeSettings.theme = this.website.theme
+        if (this.website.image_shape !== undefined) this.themeSettings.image_shape = this.website.image_shape
+        if (this.website.widget_position !== undefined) this.themeSettings.widget_position = this.website.widget_position
+        if (this.website.background_color !== undefined) this.themeSettings.background_color = this.website.background_color
+        if (this.website.text_color !== undefined) this.themeSettings.text_color = this.website.text_color
+        if (this.website.accent_color !== undefined) this.themeSettings.accent_color = this.website.accent_color
       } catch (err) {
         console.error('Failed to fetch website:', err)
       }
@@ -627,6 +692,17 @@ export default {
         ElMessage.error('Failed to save display settings')
       } finally {
         this.savingDisplaySettings = false
+      }
+    },
+    async saveThemeSettings() {
+      this.savingThemeSettings = true
+      try {
+        await api.patch(`/websites/${this.$route.params.id}`, this.themeSettings)
+        ElMessage.success('Theme settings saved successfully!')
+      } catch (err) {
+        ElMessage.error('Failed to save theme settings')
+      } finally {
+        this.savingThemeSettings = false
       }
     },
     copySnippet() {
