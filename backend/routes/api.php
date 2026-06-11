@@ -3,6 +3,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SourcesController;
 use App\Http\Controllers\VisitorController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\WebsiteController;
@@ -32,6 +33,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
+    // Analytics
+    Route::get('/analytics', [AnalyticsController::class, 'getAnalytics']);
+
     // Websites
     Route::get('/websites', [WebsiteController::class, 'index']);
     Route::post('/websites', [WebsiteController::class, 'store'])->middleware('throttle:10,1');
@@ -44,9 +48,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/websites/{website}/analytics/stats', [AnalyticsController::class, 'getStats']);
 
     // Notifications
+    Route::get('/notifications', [NotificationController::class, 'getAll']);
+    Route::post('/notifications', [NotificationController::class, 'createGlobal']);
     Route::get('/websites/{website}/notifications', [NotificationController::class, 'index']);
     Route::post('/websites/{website}/notifications', [NotificationController::class, 'store'])->middleware('throttle:20,1');
     Route::put('/notifications/{notification}', [NotificationController::class, 'update']);
     Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy']);
     Route::patch('/notifications/{notification}/toggle', [NotificationController::class, 'toggle']);
+
+    // Sources
+    Route::get('/sources', [SourcesController::class, 'index']);
+    Route::get('/sources/{websiteId}/webhook', [SourcesController::class, 'getWebhookUrl']);
+    Route::post('/sources/test-webhook', [SourcesController::class, 'testWebhook']);
 });

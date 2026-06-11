@@ -290,7 +290,7 @@ export default {
           totalViews: data.summary?.total_views || 0,
           totalClicks: data.summary?.total_clicks || 0,
           ctr: data.summary?.ctr || 0,
-          totalDisplays: data.total_displays || 0,
+          totalDisplays: data.summary?.total_displays || 0,
           viewsChange: data.views_change || 0,
           clicksChange: data.clicks_change || 0,
           ctrChange: data.ctr_change || 0,
@@ -301,7 +301,7 @@ export default {
         this.sitePerformance = data.site_performance || []
         this.notifications = data.notifications || []
 
-        // Calculate source distribution
+        // Calculate source distribution from notifications
         const sourceCounts = {}
         this.notifications.forEach(n => {
           const source = n.source || 'manual'
