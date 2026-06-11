@@ -4,6 +4,9 @@ import Register from '../pages/Register.vue'
 import Dashboard from '../pages/Dashboard.vue'
 import Sites from '../pages/Sites.vue'
 import WebsiteDetail from '../pages/WebsiteDetail.vue'
+import Notifications from '../pages/Notifications.vue'
+import Sources from '../pages/Sources.vue'
+import Analytics from '../pages/Analytics.vue'
 import Settings from '../pages/Settings.vue'
 
 const routes = [
@@ -31,6 +34,21 @@ const routes = [
   {
     path: '/sites/:id/:tab',
     component: WebsiteDetail,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/notifications',
+    component: Notifications,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/sources',
+    component: Sources,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/analytics',
+    component: Analytics,
     meta: { requiresAuth: true }
   },
   {
