@@ -325,18 +325,19 @@ export default {
     async fetchStats() {
       this.loading = true
       try {
-        const [sitesResponse, notificationsResponse] = await Promise.all([
-          api.get('/websites'),
-          api.get('/notifications')
-        ])
+        const response = await api.get('/sources')
+        const data = response.data
         
+        this.stats = {
+          connected: data.stats.connected_sites,
+          totalSites: data.stats.total_sites,
+          webhooks: data.stats.active_webhooks,
+          notifications: data.stats.notifications
+        }
+        
+        // Fetch sites for webhook URL generation
+        const sitesResponse = await api.get('/websites')
         const sites = sitesResponse.data
-        const notifications = notificationsResponse.data.data || notificationsResponse.data
-        
-        this.stats.totalSites = sites.length
-        this.stats.connected = sites.filter(s => s.is_active).length
-        this.stats.notifications = notifications.length
-        this.stats.webhooks = sites.filter(s => s.is_active).length * 2 // WooCommerce + Stripe per site
         
         if (sites.length > 0) {
           this.selectedSite = sites[0]
