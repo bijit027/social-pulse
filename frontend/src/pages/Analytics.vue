@@ -117,12 +117,8 @@
                   </el-radio-group>
                 </div>
               </template>
-              <div class="simple-chart">
-                <div class="chart-placeholder">
-                  <el-icon :size="48" color="#909399"><TrendCharts /></el-icon>
-                  <p>Chart visualization coming soon</p>
-                  <el-button type="primary" size="small" @click="exportReport">Export Data</el-button>
-                </div>
+              <div class="chart-container">
+                <canvas ref="viewsClicksChart" height="300"></canvas>
               </div>
             </el-card>
           </el-col>
@@ -133,14 +129,8 @@
                   <span>Notifications by Source</span>
                 </div>
               </template>
-              <div class="source-distribution">
-                <div v-for="source in sourceDistribution" :key="source.name" class="source-item">
-                  <div class="source-label">{{ source.name }}</div>
-                  <div class="source-bar">
-                    <div class="source-fill" :style="{ width: source.percentage + '%', background: source.color }"></div>
-                  </div>
-                  <div class="source-value">{{ source.count }}</div>
-                </div>
+              <div class="chart-container">
+                <canvas ref="sourceChart" height="300"></canvas>
               </div>
             </el-card>
           </el-col>
@@ -210,6 +200,9 @@ import api from '../services/api'
 import Sidebar from '../components/Sidebar.vue'
 import { View, Pointer, TrendCharts, Monitor } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { Chart, registerables } from 'chart.js'
+
+Chart.register(...registerables)
 
 export default {
   name: 'Analytics',
@@ -254,12 +247,22 @@ export default {
       topNotifications: [],
       sitePerformance: [],
       sourceDistribution: [],
-      notifications: []
+      notifications: [],
+      viewsClicksChart: null,
+      sourceChart: null
     }
   },
   async mounted() {
     await this.fetchSites()
     await this.fetchAnalytics()
+  },
+  beforeUnmount() {
+    if (this.viewsClicksChart) {
+      this.viewsClicksChart.destroy()
+    }
+    if (this.sourceChart) {
+      this.sourceChart.destroy()
+    }
   },
   methods: {
     async fetchSites() {
@@ -323,6 +326,12 @@ export default {
           percentage: (count / total) * 100,
           color: colors[name] || '#909399'
         }))
+
+        // Initialize charts
+        this.$nextTick(() => {
+          this.initViewsClicksChart(data.dates, data.views, data.clicks)
+          this.initSourceChart()
+        })
       } catch (err) {
         ElMessage.error('Failed to fetch analytics')
       } finally {
@@ -331,6 +340,86 @@ export default {
     },
     exportReport() {
       ElMessage.info('Export feature coming soon')
+    },
+    initViewsClicksChart(dates, views, clicks) {
+      const ctx = this.$refs.viewsClicksChart?.getContext('2d')
+      if (!ctx) return
+
+      if (this.viewsClicksChart) {
+        this.viewsClicksChart.destroy()
+      }
+
+      this.viewsClicksChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: 'Views',
+              data: views,
+              borderColor: '#409EFF',
+              backgroundColor: 'rgba(64, 158, 255, 0.1)',
+              fill: true,
+              tension: 0.4
+            },
+            {
+              label: 'Clicks',
+              data: clicks,
+              borderColor: '#67C23A',
+              backgroundColor: 'rgba(103, 194, 58, 0.1)',
+              fill: true,
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      })
+    },
+    initSourceChart() {
+      const ctx = this.$refs.sourceChart?.getContext('2d')
+      if (!ctx) return
+
+      if (this.sourceChart) {
+        this.sourceChart.destroy()
+      }
+
+      const labels = this.sourceDistribution.map(s => s.name)
+      const data = this.sourceDistribution.map(s => s.count)
+      const colors = this.sourceDistribution.map(s => s.color)
+
+      this.sourceChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: colors,
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      })
     },
     formatNumber(num) {
       if (num >= 1000000) {
@@ -485,6 +574,12 @@ export default {
 
 .chart-card {
   border-radius: 12px;
+}
+
+.chart-container {
+  height: 300px;
+  width: 100%;
+  position: relative;
 }
 
 .card-header {
