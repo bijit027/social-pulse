@@ -29,6 +29,11 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/sites/:id/:tab',
+    component: WebsiteDetail,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/settings',
     component: Settings,
     meta: { requiresAuth: true }

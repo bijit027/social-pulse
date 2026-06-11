@@ -609,7 +609,7 @@ export default {
       adding: false,
       addError: '',
       copied: false,
-      activeTab: 'overview',
+      activeTab: this.$route.params.tab || 'overview',
       notificationTab: 'auto',
       sourceTab: 'woocommerce',
       copiedWebhook: false,
@@ -681,6 +681,13 @@ export default {
     
     // Start live visitors refresh
     this.startLiveVisitorsRefresh()
+  },
+  watch: {
+    activeTab(newTab) {
+      if (newTab !== this.$route.params.tab) {
+        this.$router.replace(`/sites/${this.$route.params.id}/${newTab}`)
+      }
+    }
   },
   methods: {
     async fetchWebsite() {
