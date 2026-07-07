@@ -1,23 +1,19 @@
 <?php
+
 return [
-    'paths'               => ['api/*'],
-    'allowed_methods'     => ['*'],
-    'allowed_origins'     => [
-        'http://localhost:5173',
-        'http://localhost:5174',
-        'http://localhost:5175',
-        'http://127.0.0.1:5173',
-        'http://127.0.0.1:5174',
-        'http://localhost:9001',
-        'https://social-pulse-730bi47hv-bijit-deb-s-projects.vercel.app',
-        'https://social-pulse-ebon.vercel.app',
-        'https://support.test',
-    'http://support.test',
-        'https://*.s6-tastewp.com',
-    ],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+
+    'allowed_methods' => ['*'],
+
+    'allowed_origins' => array_filter(explode(',', env('CORS_ALLOWED_ORIGINS', ''))),
+
     'allowed_origins_patterns' => [],
-    'allowed_headers'     => ['*'],
-    'exposed_headers'     => [],
-    'max_age'             => 0,
+
+    'allowed_headers' => ['*'],
+
+    'exposed_headers' => [],
+
+    'max_age' => 0,
+
     'supports_credentials' => true,
 ];
