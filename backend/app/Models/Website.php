@@ -13,6 +13,14 @@ class Website extends Model
         'theme', 'image_shape', 'widget_position', 'background_color', 'text_color', 'accent_color'
     ];
 
+    protected $casts = [
+        'is_active' => 'boolean',
+        'loop' => 'boolean',
+        'link_open' => 'boolean',
+        'close_button' => 'boolean',
+        'hide_on_mobile' => 'boolean',
+    ];
+
     protected static function boot()
     {
         parent::boot();

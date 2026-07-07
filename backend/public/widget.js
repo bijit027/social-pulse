@@ -229,7 +229,7 @@
 
       setTimeout(function () {
         container.style.display = 'none';
-        if (shouldLoop) {
+        if (shouldLoop || index < notifications.length) {
           setTimeout(show, 1000);
         }
       }, displayDuration * 1000);

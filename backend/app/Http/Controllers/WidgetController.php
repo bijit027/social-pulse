@@ -23,7 +23,7 @@ class WidgetController extends Controller
             // Prioritize manually ordered ones, then newest automated ones
             ->orderBy('display_order')
             ->orderBy('created_at', 'desc')
-            ->limit(10)
+            ->limit($website->display_last ?? 20)
             ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at', 'product_url', 'rating', 'button_text', 'source']);
 
         $displaySettings = [

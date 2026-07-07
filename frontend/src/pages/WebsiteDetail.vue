@@ -634,9 +634,9 @@ export default {
       addError: '',
       copied: false,
       activeTab: this.$route.params.tab || 'overview',
-      notificationTab: 'auto',
-      sourceTab: 'woocommerce',
-      settingsTab: 'general',
+      notificationTab: this.$route.query.nTab || 'auto',
+      sourceTab: this.$route.query.sTab || 'woocommerce',
+      settingsTab: this.$route.query.setTab || 'general',
       copiedWebhook: false,
       copiedWooCommerce: false,
       copiedWooCommerceReview: false,
@@ -719,8 +719,17 @@ export default {
   watch: {
     activeTab(newTab) {
       if (newTab !== this.$route.params.tab) {
-        this.$router.replace(`/sites/${this.$route.params.id}/${newTab}`)
+        this.$router.replace({ path: `/sites/${this.$route.params.id}/${newTab}`, query: this.$route.query })
       }
+    },
+    notificationTab(newVal) {
+      this.$router.replace({ query: { ...this.$route.query, nTab: newVal } })
+    },
+    sourceTab(newVal) {
+      this.$router.replace({ query: { ...this.$route.query, sTab: newVal } })
+    },
+    settingsTab(newVal) {
+      this.$router.replace({ query: { ...this.$route.query, setTab: newVal } })
     }
   },
   methods: {
