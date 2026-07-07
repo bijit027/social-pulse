@@ -205,7 +205,7 @@ class AnalyticsController extends Controller
         $recentNotifications = Notification::whereIn('website_id', $websiteIds)
             ->with('website')
             ->orderBy('created_at', 'desc')
-            ->take(5)
+            ->take(4)
             ->get()
             ->map(function ($notification) {
                 return [
@@ -223,6 +223,33 @@ class AnalyticsController extends Controller
             'today_displays' => $todayDisplays,
             'recent_activities' => $recentNotifications
         ]);
+    }
+
+    /**
+     * Get paginated activities log for the user
+     */
+    public function getActivities(Request $request)
+    {
+        $user = auth()->user();
+        $websiteIds = Website::where('user_id', $user->id)->pluck('id');
+
+        $activities = Notification::whereIn('website_id', $websiteIds)
+            ->with('website')
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        $activities->getCollection()->transform(function ($notification) {
+            return [
+                'id' => $notification->id,
+                'message' => $notification->message,
+                'source' => $notification->source,
+                'website_name' => $notification->website ? $notification->website->name : 'Unknown',
+                'created_at' => $notification->created_at,
+                'time_ago' => $notification->created_at->diffForHumans()
+            ];
+        });
+
+        return response()->json($activities);
     }
 
     /**

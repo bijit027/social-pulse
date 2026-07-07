@@ -42,6 +42,11 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/activity',
+    component: () => import('../pages/Activity.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/sources',
     component: Sources,
     meta: { requiresAuth: true }

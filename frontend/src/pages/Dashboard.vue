@@ -95,7 +95,7 @@
                   <h3 class="card-title">Recent activity</h3>
                   <p class="card-subtitle">Latest events from your connected sites.</p>
                 </div>
-                <el-button link class="view-all-btn">
+                <el-button link class="view-all-btn" @click="$router.push('/activity')">
                   View all
                 </el-button>
               </div>
