@@ -106,9 +106,9 @@
                   </div>
                   <div class="activity-text">
                     <p class="activity-title">{{ activity.message }}</p>
-                    <p class="activity-meta">{{ index === 0 ? 'Acme Inc. · $129.00' : index === 1 ? 'Limited offer · Black Friday' : 'Verified · v2.4.1' }}</p>
+                    <p class="activity-meta">{{ activity.website_name }} · {{ activity.source }}</p>
                   </div>
-                  <time class="activity-time">{{ index === 0 ? '2m ago' : index === 1 ? '1h ago' : 'Yesterday' }}</time>
+                  <time class="activity-time">{{ activity.time_ago }}</time>
                 </li>
               </ul>
             </el-card>
@@ -247,23 +247,21 @@ export default {
         name: '',
         domain: ''
       },
-      recentActivities: []
+      recentActivities: [],
+      totalDisplays: 0,
+      todayDisplays: 0
     }
   },
   computed: {
     totalNotifications() {
       return this.websites.reduce((sum, site) => sum + (site.notifications_count || 0), 0)
-    },
-    totalDisplays() {
-      return 8432 // Placeholder - would need to fetch from API
-    },
-    todayDisplays() {
-      return 245 // Placeholder - would need to fetch from API
     }
   },
   async mounted() {
-    await this.fetchWebsites()
-    this.generateRecentActivities()
+    await Promise.all([
+      this.fetchWebsites(),
+      this.fetchDashboardStats()
+    ])
   },
   methods: {
     async fetchWebsites() {
@@ -276,12 +274,15 @@ export default {
         this.loading = false
       }
     },
-    generateRecentActivities() {
-      this.recentActivities = [
-        { id: 1, message: 'Purchase received from WooCommerce' },
-        { id: 2, message: 'Manual notification created' },
-        { id: 3, message: 'Widget installed' }
-      ]
+    async fetchDashboardStats() {
+      try {
+        const response = await api.get('/dashboard-stats')
+        this.totalDisplays = response.data.total_displays || 0
+        this.todayDisplays = response.data.today_displays || 0
+        this.recentActivities = response.data.recent_activities || []
+      } catch (err) {
+        console.error('Failed to fetch dashboard stats:', err)
+      }
     },
     async handleAddWebsite() {
       this.adding = true

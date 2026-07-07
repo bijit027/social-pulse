@@ -87,6 +87,9 @@ class VisitorController extends Controller
             5
         );
 
+        // Broadcast the update to the dashboard via WebSockets
+        broadcast(new \App\Events\ActiveVisitorsUpdated($website->id, $totalVisitors));
+
         return response()->json([
             'page_visitors'  => $pageVisitors,
             'total_visitors' => $totalVisitors,

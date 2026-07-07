@@ -178,6 +178,54 @@ class AnalyticsController extends Controller
     }
 
     /**
+     * Get dashboard summary stats
+     */
+    public function getDashboardStats(Request $request)
+    {
+        $user = auth()->user();
+        $websiteIds = Website::where('user_id', $user->id)->pluck('id');
+
+        if ($websiteIds->isEmpty()) {
+            return response()->json([
+                'total_displays' => 0,
+                'today_displays' => 0,
+                'recent_activities' => []
+            ]);
+        }
+
+        // All-time displays
+        $totalDisplays = Notification::whereIn('website_id', $websiteIds)->count();
+
+        // Today's displays
+        $todayDisplays = Notification::whereIn('website_id', $websiteIds)
+            ->where('created_at', '>=', now()->startOfDay())
+            ->count();
+
+        // Recent activities (latest notifications)
+        $recentNotifications = Notification::whereIn('website_id', $websiteIds)
+            ->with('website')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get()
+            ->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'message' => $notification->message,
+                    'source' => $notification->source,
+                    'website_name' => $notification->website ? $notification->website->name : 'Unknown',
+                    'created_at' => $notification->created_at,
+                    'time_ago' => $notification->created_at->diffForHumans()
+                ];
+            });
+
+        return response()->json([
+            'total_displays' => $totalDisplays,
+            'today_displays' => $todayDisplays,
+            'recent_activities' => $recentNotifications
+        ]);
+    }
+
+    /**
      * Get stats for a specific period
      */
     private function getPeriodStats($websiteIds, $startDate, $endDate)

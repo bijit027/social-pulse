@@ -600,6 +600,7 @@
 
 <script>
 import api from '../services/api'
+import echo from '../services/echo'
 import Sidebar from '../components/Sidebar.vue'
 import { View, Calendar, Lightning, Plus, DocumentCopy, Check, Delete, Bell } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -712,8 +713,8 @@ export default {
       this.fetchSnippet()
     ])
     
-    // Start live visitors refresh
-    this.startLiveVisitorsRefresh()
+    // Start listening to WebSocket events for real-time live visitors
+    this.initEcho()
   },
   watch: {
     activeTab(newTab) {
@@ -941,17 +942,21 @@ export default {
       if (diffDays === 1) return 'yesterday'
       return `${diffDays} days ago`
     },
-    startLiveVisitorsRefresh() {
-      // Refresh live visitors every 30 seconds
-      this.liveVisitorsInterval = setInterval(() => {
-        this.fetchAnalytics()
-      }, 30000)
+    initEcho() {
+      if (!this.website || !echo) return
+
+      echo.channel(`website.${this.website.id}.analytics`)
+        .listen('ActiveVisitorsUpdated', (e) => {
+          if (this.analytics) {
+            this.analytics.active_visitors = e.active_visitors
+          }
+        })
     }
   },
   beforeUnmount() {
-    // Clear interval when component is destroyed
-    if (this.liveVisitorsInterval) {
-      clearInterval(this.liveVisitorsInterval)
+    // Disconnect from channel when component is destroyed
+    if (this.website && echo) {
+      echo.leaveChannel(`website.${this.website.id}.analytics`)
     }
   }
 }

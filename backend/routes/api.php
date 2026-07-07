@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Analytics
     Route::get('/analytics', [AnalyticsController::class, 'getAnalytics']);
+    Route::get('/dashboard-stats', [AnalyticsController::class, 'getDashboardStats']);
 
     // Websites
     Route::get('/websites', [WebsiteController::class, 'index']);
