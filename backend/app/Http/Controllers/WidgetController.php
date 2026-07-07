@@ -47,6 +47,7 @@ class WidgetController extends Controller
             'text_color' => $website->text_color ?? '#1a1a1a',
             'accent_color' => $website->accent_color ?? '#FF6B35',
             'custom_css' => $website->custom_css ?? '',
+            'custom_css_active' => $website->custom_css_active ?? true,
         ];
 
         return response()->json([

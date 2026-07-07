@@ -49,6 +49,7 @@ class StoreWebsiteRequest extends FormRequest
             'text_color' => 'nullable|string|max:7',
             'accent_color' => 'nullable|string|max:7',
             'custom_css' => 'nullable|string',
+            'custom_css_active' => 'nullable|boolean',
         ];
     }
 }

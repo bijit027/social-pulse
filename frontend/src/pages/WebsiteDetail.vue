@@ -547,80 +547,79 @@
                     </el-form>
                   </el-card>
                 </el-tab-pane>
+                <!-- Custom CSS Tab -->
+                <el-tab-pane label="Custom CSS" name="custom-css">
+                  <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom: 20px;">
+                    <div>
+                      <el-switch v-model="themeSettings.custom_css_active" active-text="Enable Custom CSS" style="margin-right: 15px;" />
+                      <el-button type="primary" :loading="savingThemeSettings" @click="saveThemeSettings">Save Custom CSS</el-button>
+                    </div>
+                  </div>
+                  <el-row :gutter="20">
+                    <el-col :span="12">
+                      <el-card shadow="hover" class="settings-card">
+                        <template #header>
+                          <div class="card-header">
+                            <span>CSS Editor</span>
+                          </div>
+                        </template>
+                        <div v-if="selectedElementClass" class="inspector-panel">
+                          <div class="inspector-header">
+                            <strong>Inspector:</strong> <el-tag size="small">{{ selectedElementClass }}</el-tag>
+                            <el-button link type="primary" size="small" @click="selectedElementClass = ''">Close</el-button>
+                          </div>
+                          <el-row :gutter="10" class="inspector-controls">
+                            <el-col :span="6">
+                              <label>Border Width</label>
+                              <el-input-number v-model="inspectorSettings.borderWidth" :min="0" :max="20" size="small" style="width:100%" />
+                            </el-col>
+                            <el-col :span="6">
+                              <label>Border Color</label>
+                              <el-color-picker v-model="inspectorSettings.borderColor" size="small" />
+                            </el-col>
+                            <el-col :span="6">
+                              <label>Radius (px)</label>
+                              <el-input-number v-model="inspectorSettings.borderRadius" :min="0" :max="100" size="small" style="width:100%" />
+                            </el-col>
+                            <el-col :span="6">
+                              <label>Background</label>
+                              <el-color-picker v-model="inspectorSettings.backgroundColor" size="small" />
+                            </el-col>
+                          </el-row>
+                          <el-button type="primary" size="small" @click="applyVisualStyles" class="apply-btn">Add to Editor</el-button>
+                        </div>
+
+                        <el-input
+                          v-model="themeSettings.custom_css"
+                          type="textarea"
+                          :rows="12"
+                          placeholder=".sp-notification-box { border: 1px solid red; }"
+                          style="font-family: monospace;"
+                        />
+                        <div class="form-help" style="margin-top: 10px;">Click elements in the Live Preview to visually generate CSS for them!</div>
+                      </el-card>
+                    </el-col>
+                    <el-col :span="12">
+                      <el-card shadow="hover" class="settings-card" style="height: 100%">
+                        <template #header>
+                          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>Live Preview</span>
+                            <el-switch v-model="inspectorMode" active-text="Inspector Mode" />
+                          </div>
+                        </template>
+                        <div class="preview-wrapper">
+                          <iframe 
+                            class="live-preview-frame"
+                            :srcdoc="previewHtml" 
+                            frameborder="0"
+                            sandbox="allow-scripts allow-same-origin"
+                          ></iframe>
+                        </div>
+                      </el-card>
+                    </el-col>
+                  </el-row>
+                </el-tab-pane>
               </el-tabs>
-            </div>
-          </el-tab-pane>
-
-          <!-- Custom CSS Tab -->
-          <el-tab-pane label="Custom CSS" name="custom-css">
-            <div class="tab-content">
-              <div class="tab-header">
-                <h2>Custom CSS</h2>
-                <el-button type="primary" :loading="savingThemeSettings" @click="saveThemeSettings">Save Custom CSS</el-button>
-              </div>
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-card shadow="hover" class="settings-card">
-                    <template #header>
-                      <div class="card-header">
-                        <span>CSS Editor</span>
-                      </div>
-                    </template>
-                    <div v-if="selectedElementClass" class="inspector-panel">
-                      <div class="inspector-header">
-                        <strong>Inspector:</strong> <el-tag size="small">{{ selectedElementClass }}</el-tag>
-                        <el-button link type="primary" size="small" @click="selectedElementClass = ''">Close</el-button>
-                      </div>
-                      <el-row :gutter="10" class="inspector-controls">
-                        <el-col :span="6">
-                          <label>Border Width</label>
-                          <el-input-number v-model="inspectorSettings.borderWidth" :min="0" :max="20" size="small" style="width:100%" />
-                        </el-col>
-                        <el-col :span="6">
-                          <label>Border Color</label>
-                          <el-color-picker v-model="inspectorSettings.borderColor" size="small" />
-                        </el-col>
-                        <el-col :span="6">
-                          <label>Radius (px)</label>
-                          <el-input-number v-model="inspectorSettings.borderRadius" :min="0" :max="100" size="small" style="width:100%" />
-                        </el-col>
-                        <el-col :span="6">
-                          <label>Background</label>
-                          <el-color-picker v-model="inspectorSettings.backgroundColor" size="small" />
-                        </el-col>
-                      </el-row>
-                      <el-button type="primary" size="small" @click="applyVisualStyles" class="apply-btn">Add to Editor</el-button>
-                    </div>
-
-                    <el-input
-                      v-model="themeSettings.custom_css"
-                      type="textarea"
-                      :rows="12"
-                      placeholder=".sp-notification-box { border: 1px solid red; }"
-                      style="font-family: monospace;"
-                    />
-                    <div class="form-help" style="margin-top: 10px;">Click elements in the Live Preview to visually generate CSS for them!</div>
-                  </el-card>
-                </el-col>
-                <el-col :span="12">
-                  <el-card shadow="hover" class="settings-card" style="height: 100%">
-                    <template #header>
-                      <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>Live Preview</span>
-                        <el-switch v-model="inspectorMode" active-text="Inspector Mode" />
-                      </div>
-                    </template>
-                    <div class="preview-wrapper">
-                      <iframe 
-                        class="live-preview-frame"
-                        :srcdoc="previewHtml" 
-                        frameborder="0"
-                        sandbox="allow-scripts allow-same-origin"
-                      ></iframe>
-                    </div>
-                  </el-card>
-                </el-col>
-              </el-row>
             </div>
           </el-tab-pane>
         </el-tabs>
@@ -742,7 +741,8 @@ export default {
         background_color: '#ffffff',
         text_color: '#1a1a1a',
         accent_color: '#FF6B35',
-        custom_css: ''
+        custom_css: '',
+        custom_css_active: true
       },
       savingThemeSettings: false,
       selectedElementClass: '',
@@ -799,7 +799,7 @@ export default {
         'circle': '50%'
       }[this.themeSettings.image_shape || 'rounded']
 
-      const customCss = this.themeSettings.custom_css || ''
+      const customCss = (this.themeSettings.custom_css_active !== false) ? (this.themeSettings.custom_css || '') : ''
 
       return `
         <!DOCTYPE html>
@@ -918,6 +918,7 @@ export default {
         if (this.website.text_color !== undefined) this.themeSettings.text_color = this.website.text_color
         if (this.website.accent_color !== undefined) this.themeSettings.accent_color = this.website.accent_color
         if (this.website.custom_css !== undefined) this.themeSettings.custom_css = this.website.custom_css
+        if (this.website.custom_css_active !== undefined) this.themeSettings.custom_css_active = this.website.custom_css_active
       } catch (err) {
         console.error('Failed to fetch website:', err)
       }

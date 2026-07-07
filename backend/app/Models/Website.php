@@ -10,7 +10,7 @@ class Website extends Model
         'user_id', 'name', 'domain', 'pixel_id', 'is_active',
         'display_for', 'display_last', 'display_from_days', 'display_from_hours', 'display_from_minutes',
         'loop', 'link_open', 'show_on_display', 'close_button', 'hide_on_mobile',
-        'theme', 'image_shape', 'widget_position', 'background_color', 'text_color', 'accent_color', 'custom_css'
+        'theme', 'image_shape', 'widget_position', 'background_color', 'text_color', 'accent_color', 'custom_css', 'custom_css_active'
     ];
 
     protected $casts = [
@@ -19,6 +19,7 @@ class Website extends Model
         'link_open' => 'boolean',
         'close_button' => 'boolean',
         'hide_on_mobile' => 'boolean',
+        'custom_css_active' => 'boolean',
     ];
 
     protected static function boot()

@@ -239,7 +239,7 @@
     style.textContent = '@keyframes sp-slide-in{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}';
     document.head.appendChild(style);
 
-    if (themeSettings.custom_css) {
+    if (themeSettings.custom_css && themeSettings.custom_css_active !== false) {
       var customCssStyle = document.createElement('style');
       customCssStyle.id = 'sp-custom-css';
       customCssStyle.textContent = themeSettings.custom_css;
