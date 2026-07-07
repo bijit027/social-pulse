@@ -183,6 +183,10 @@ export default {
   background-color: var(--color-bg);
 }
 
+.activity-page :deep(.el-card__body) {
+  padding: 0px;
+}
+
 .main-content {
   flex: 1;
   padding: 2rem;
