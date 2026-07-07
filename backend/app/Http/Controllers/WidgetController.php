@@ -17,23 +17,14 @@ class WidgetController extends Controller
             return response()->json(['notifications' => [], 'display_settings' => []]);
         }
 
-        // First try: get woocommerce notifications from last 24 hours
+        // Get all active notifications (both automated and manual)
         $notifications = $website->notifications()
             ->where('is_active', true)
-            ->where('source', 'woocommerce')
-            ->where('created_at', '>=', now()->subHours(24))
+            // Prioritize manually ordered ones, then newest automated ones
+            ->orderBy('display_order')
             ->orderBy('created_at', 'desc')
             ->limit(10)
-            ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at', 'product_url']);
-
-        // Fallback: if no recent webhook notifications, show manual ones
-        if ($notifications->isEmpty()) {
-            $notifications = $website->notifications()
-                ->where('is_active', true)
-                ->where('source', 'manual')
-                ->orderBy('display_order')
-                ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at', 'product_url']);
-        }
+            ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at', 'product_url', 'rating', 'button_text', 'source']);
 
         $displaySettings = [
             'display_for' => $website->display_for ?? 5,

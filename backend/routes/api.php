@@ -22,6 +22,7 @@ Route::post('/visitor/{pixelId}/ping', [VisitorController::class, 'ping']);
 
 // Public webhook endpoints
 Route::post('/webhook/woocommerce/{pixelId}', [WebhookController::class, 'woocommerce']);
+Route::post('/webhook/woocommerce-review/{pixelId}', [WebhookController::class, 'woocommerceReview']);
 Route::post('/webhook/stripe/{pixelId}', [WebhookController::class, 'stripe']);
 
 // Auth endpoints

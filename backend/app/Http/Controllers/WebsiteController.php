@@ -81,6 +81,10 @@ class WebsiteController extends Controller
                     'type'           => $notification->type,
                     'emoji'          => $notification->emoji,
                     'is_active'      => $notification->is_active,
+                    'source'         => $notification->source,
+                    'city'           => $notification->city,
+                    'country'        => $notification->country,
+                    'created_at'     => $notification->created_at,
                     'total_displays' => $notification->displays_count,
                     'last_shown'     => $notification->displays->first()?->displayed_at,
                 ];

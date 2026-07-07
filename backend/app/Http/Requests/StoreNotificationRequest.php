@@ -23,11 +23,14 @@ class StoreNotificationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'type'    => 'required|in:purchase,signup,review',
-            'message' => 'required|string|max:255',
-            'city'    => 'nullable|string|max:100',
-            'country' => 'nullable|string|max:100',
-            'emoji'   => 'nullable|string|max:10',
+            'type'        => 'required|in:purchase,signup,review,banner',
+            'message'     => 'required|string|max:255',
+            'city'        => 'nullable|string|max:100',
+            'country'     => 'nullable|string|max:100',
+            'emoji'       => 'nullable|string|max:10',
+            'product_url' => 'nullable|url|max:255',
+            'rating'      => 'nullable|integer|min:1|max:5',
+            'button_text' => 'nullable|string|max:50',
         ];
     }
 }

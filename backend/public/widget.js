@@ -128,7 +128,6 @@
     }
 
     var container = document.createElement('div');
-    container.style.cssText = 'position:fixed;' + positionStyle + 'z-index:2147483647;font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:300px;display:none;';
     document.body.appendChild(container);
 
     function show() {
@@ -145,19 +144,52 @@
 
       var hasProductUrl = n.product_url && n.product_url.length > 0;
       var cursorStyle = hasProductUrl ? 'cursor:pointer;' : '';
-      var viewProductText = hasProductUrl ? '<div style="font-size:10px;color:' + accentColor + ';margin-top:4px;font-weight:500;">View Product \u2192</div>' : '';
 
-      container.innerHTML =
-        '<div style="background:' + backgroundColor + ';border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;animation:sp-slide-in 0.3s ease;' + cursorStyle + '" data-notification-id="' + n.id + '">' +
-        '<span style="font-size:24px;border-radius:' + emojiRadius + ';">' + (n.emoji || '\u{1F6D2}') + '</span>' +
-        '<div style="flex:1;">' +
-        '<div style="font-size:13px;font-weight:600;color:' + textColor + ';line-height:1.4;">' + n.message + '</div>' +
-        (n.city ? '<div style="font-size:11px;color:' + textColor + ';opacity:0.7;margin-top:2px;">' + n.city + (n.country ? ', ' + n.country : '') + '</div>' : '') +
-        (n.created_at ? '<div style="font-size:10px;color:' + textColor + ';opacity:0.5;margin-top:1px;">' + timeAgo(n.created_at) + '</div>' : '') +
-        viewProductText +
-        '</div>' +
-        closeButton +
-        '</div>';
+      if (n.type === 'banner') {
+        container.style.cssText = 'position:fixed;top:0;left:0;right:0;width:100%;z-index:2147483647;font-family:-apple-system,BlinkMacSystemFont,sans-serif;display:none;';
+        
+        var buttonHtml = n.button_text ? '<button style="background:' + accentColor + ';color:#fff;border:none;border-radius:4px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;margin-left:15px;">' + n.button_text + '</button>' : '';
+
+        container.innerHTML = 
+          '<div style="background:' + backgroundColor + ';padding:10px 20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.1);animation:sp-slide-down 0.3s ease;' + cursorStyle + '" data-notification-id="' + n.id + '">' +
+          '<div style="font-size:14px;font-weight:600;color:' + textColor + ';">' + n.message + '</div>' +
+          buttonHtml +
+          '<div style="position:absolute;right:20px;">' + closeButton + '</div>' +
+          '</div>';
+
+        if (!document.getElementById('sp-banner-style')) {
+          var s = document.createElement('style');
+          s.id = 'sp-banner-style';
+          s.textContent = '@keyframes sp-slide-down{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}';
+          document.head.appendChild(s);
+        }
+      } else {
+        container.style.cssText = 'position:fixed;' + positionStyle + 'z-index:2147483647;font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:300px;display:none;';
+        var viewProductText = hasProductUrl ? '<div style="font-size:10px;color:' + accentColor + ';margin-top:4px;font-weight:500;">View Product \u2192</div>' : '';
+
+        var reviewStars = '';
+        if (n.type === 'review') {
+          var rating = n.rating || 5;
+          var stars = '';
+          for (var i = 1; i <= 5; i++) {
+            stars += (i <= rating) ? '<span style="color:#FFB800;">\u2605</span>' : '<span style="color:#ccc;">\u2605</span>';
+          }
+          reviewStars = '<div style="font-size:14px;margin-top:2px;">' + stars + '</div>';
+        }
+
+        container.innerHTML =
+          '<div style="background:' + backgroundColor + ';border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;animation:sp-slide-in 0.3s ease;' + cursorStyle + '" data-notification-id="' + n.id + '">' +
+          '<span style="font-size:24px;border-radius:' + emojiRadius + ';">' + (n.emoji || '\u{1F6D2}') + '</span>' +
+          '<div style="flex:1;">' +
+          '<div style="font-size:13px;font-weight:600;color:' + textColor + ';line-height:1.4;">' + n.message + '</div>' +
+          reviewStars +
+          (n.city ? '<div style="font-size:11px;color:' + textColor + ';opacity:0.7;margin-top:2px;">' + n.city + (n.country ? ', ' + n.country : '') + '</div>' : '') +
+          (n.created_at && n.source !== 'manual' ? '<div style="font-size:10px;color:' + textColor + ';opacity:0.5;margin-top:1px;">' + timeAgo(n.created_at) + '</div>' : '') +
+          viewProductText +
+          '</div>' +
+          closeButton +
+          '</div>';
+      }
 
       container.style.display = 'block';
 

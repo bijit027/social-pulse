@@ -114,6 +114,70 @@ class WebhookController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function woocommerceReview(Request $request, string $pixelId)
+    {
+        \Log::info('WooCommerce Review Webhook RAW DATA:', $request->all());
+
+        $website = Website::where('pixel_id', $pixelId)
+            ->where('is_active', true)
+            ->first();
+
+        if (!$website) {
+            return response()->json(['ok' => false], 404);
+        }
+
+        $data = $request->all();
+
+        // Extract reviewer info (WooCommerce standard review payload)
+        $reviewer = $data['reviewer'] ?? $data['author'] ?? 'Someone';
+        // Sometimes reviewer contains full name, sometimes just first name
+        $nameParts = explode(' ', $reviewer);
+        $firstName = $nameParts[0];
+        $lastName = count($nameParts) > 1 ? $nameParts[1] : null;
+
+        $customerName = 'Someone';
+        if ($firstName && $lastName) {
+            $customerName = $firstName . ' ' . substr($lastName, 0, 1) . '.';
+        } elseif ($firstName) {
+            $customerName = $firstName;
+        }
+
+        $rating = $data['rating'] ?? 5;
+        $reviewText = $data['review'] ?? $data['content'] ?? '';
+        
+        // Truncate long reviews
+        if (strlen($reviewText) > 80) {
+            $reviewText = substr($reviewText, 0, 80) . '...';
+        }
+
+        $message = $customerName . ' just reviewed: "' . $reviewText . '"';
+        if (empty($reviewText)) {
+            $message = $customerName . ' just left a ' . $rating . '-star review!';
+        }
+
+        // Product URL
+        $productUrl = null;
+        if (!empty($data['product_id'])) {
+            $domain = $website->domain ?? '';
+            $siteUrl = str_starts_with($domain, 'http') ? $domain : 'https://' . $domain;
+            $productUrl = rtrim($siteUrl, '/') . '/?post_type=product&p=' . $data['product_id'];
+        }
+
+        Notification::create([
+            'website_id'    => $website->id,
+            'type'          => 'review',
+            'message'       => $message,
+            'emoji'         => '⭐',
+            'product_url'   => $productUrl,
+            'rating'        => $rating,
+            'is_active'     => true,
+            'display_order' => 0,
+            'source'        => 'woocommerce',
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
     public function stripe(Request $request, string $pixelId)
     {
         \Log::info('Stripe Webhook RAW DATA:', $request->all());

@@ -197,12 +197,21 @@
                         <li>Delivery URL: Copy the URL below</li>
                         <li>Save the webhook</li>
                       </ol>
-                      <div class="webhook-section">
-                        <label>Webhook URL</label>
+                      <div class="webhook-section" style="margin-top: 15px;">
+                        <label style="display:block; margin-bottom: 5px; font-weight: 600;">Sales Webhook URL <span style="font-size:12px; font-weight: normal;">(Topic: Order created)</span></label>
                         <div class="webhook-url-box">
                           <el-input v-model="wooCommerceWebhookUrl" readonly class="webhook-input" />
                           <el-button type="primary" :icon="copiedWooCommerce ? Check : DocumentCopy" @click="copyWooCommerceWebhook">
                             {{ copiedWooCommerce ? 'Copied!' : 'Copy' }}
+                          </el-button>
+                        </div>
+                      </div>
+                      <div class="webhook-section" style="margin-top: 15px;">
+                        <label style="display:block; margin-bottom: 5px; font-weight: 600;">Reviews Webhook URL <span style="font-size:12px; font-weight: normal;">(Topic: Product review created)</span></label>
+                        <div class="webhook-url-box">
+                          <el-input v-model="wooCommerceReviewWebhookUrl" readonly class="webhook-input" />
+                          <el-button type="primary" :icon="copiedWooCommerceReview ? Check : DocumentCopy" @click="copyWooCommerceReviewWebhook">
+                            {{ copiedWooCommerceReview ? 'Copied!' : 'Copy' }}
                           </el-button>
                         </div>
                       </div>
@@ -552,7 +561,17 @@
             <el-option label="Purchase" value="purchase" />
             <el-option label="Signup" value="signup" />
             <el-option label="Review" value="review" />
+            <el-option label="Top Banner" value="banner" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="Rating" v-if="newNotification.type === 'review'">
+          <el-rate v-model="newNotification.rating" :max="5" />
+        </el-form-item>
+        <el-form-item label="Button Text" v-if="newNotification.type === 'banner'">
+          <el-input v-model="newNotification.button_text" type="text" placeholder="e.g. Buy Now" />
+        </el-form-item>
+        <el-form-item label="Link URL" v-if="newNotification.type === 'banner' || newNotification.type === 'purchase'">
+          <el-input v-model="newNotification.product_url" type="url" placeholder="https://example.com/product" />
         </el-form-item>
         <el-form-item label="Message">
           <el-input v-model="newNotification.message" type="text" required 
@@ -561,10 +580,10 @@
         <el-form-item label="City (optional)">
           <el-input v-model="newNotification.city" type="text" placeholder="New York" />
         </el-form-item>
-        <el-form-item label="Country (optional)">
+        <el-form-item label="Country (optional)" v-if="newNotification.type !== 'banner'">
           <el-input v-model="newNotification.country" type="text" placeholder="USA" />
         </el-form-item>
-        <el-form-item label="Emoji">
+        <el-form-item label="Emoji" v-if="newNotification.type !== 'banner'">
           <el-input v-model="newNotification.emoji" type="text" placeholder="🛒" />
         </el-form-item>
         <el-alert v-if="addError" :title="addError" type="error" :closable="false" style="margin-bottom: 1rem" />
@@ -619,8 +638,10 @@ export default {
       settingsTab: 'general',
       copiedWebhook: false,
       copiedWooCommerce: false,
+      copiedWooCommerceReview: false,
       copiedStripe: false,
       wooCommerceWebhookUrl: '',
+      wooCommerceReviewWebhookUrl: '',
       stripeWebhookUrl: '',
       widgetSettings: {
         position: 'bottom-right',
@@ -653,7 +674,10 @@ export default {
         message: '',
         city: '',
         country: '',
-        emoji: '🛒'
+        emoji: '🛒',
+        rating: 5,
+        button_text: '',
+        product_url: ''
       }
     }
   },
@@ -671,6 +695,10 @@ export default {
     wooCommerceWebhookUrl() {
       if (!this.website) return ''
       return import.meta.env.VITE_API_URL.replace('/api', '') + '/api/webhook/woocommerce/' + this.website.pixel_id
+    },
+    wooCommerceReviewWebhookUrl() {
+      if (!this.website) return ''
+      return import.meta.env.VITE_API_URL.replace('/api', '') + '/api/webhook/woocommerce-review/' + this.website.pixel_id
     },
     stripeWebhookUrl() {
       if (!this.website) return ''
@@ -754,7 +782,7 @@ export default {
       try {
         const response = await api.post(`/websites/${this.$route.params.id}/notifications`, this.newNotification)
         this.showAddModal = false
-        this.newNotification = { type: 'purchase', message: '', city: '', country: '', emoji: '🛒' }
+        this.newNotification = { type: 'purchase', message: '', city: '', country: '', emoji: '🛒', rating: 5, button_text: '', product_url: '' }
         await this.fetchAnalytics()
         ElMessage.success('Notification added!')
       } catch (err) {
