@@ -406,134 +406,138 @@
                 <h2>Settings</h2>
               </div>
 
-              <el-card class="settings-card" shadow="hover">
-                <template #header>
-                  <div class="card-header">
-                    <span>Site Information</span>
-                  </div>
-                </template>
-                <el-descriptions :column="1" border>
-                  <el-descriptions-item label="Site Name">{{ website.name }}</el-descriptions-item>
-                  <el-descriptions-item label="Website URL">{{ website.domain }}</el-descriptions-item>
-                  <el-descriptions-item label="Status">
-                    <el-tag :type="website.is_active ? 'success' : 'info'">{{ website.is_active ? 'Active' : 'Disabled' }}</el-tag>
-                  </el-descriptions-item>
-                  <el-descriptions-item label="Created">{{ formatDate(website.created_at) }}</el-descriptions-item>
-                </el-descriptions>
-              </el-card>
+              <el-tabs v-model="settingsTab" class="settings-tabs">
+                <!-- General Tab -->
+                <el-tab-pane label="Site Information" name="general">
+                  <el-card class="settings-card" shadow="hover">
+                    <template #header>
+                      <div class="card-header">
+                        <span>Site Information</span>
+                      </div>
+                    </template>
+                    <el-descriptions :column="1" border>
+                      <el-descriptions-item label="Site Name">{{ website.name }}</el-descriptions-item>
+                      <el-descriptions-item label="Website URL">{{ website.domain }}</el-descriptions-item>
+                      <el-descriptions-item label="Status">
+                        <el-tag :type="website.is_active ? 'success' : 'info'">{{ website.is_active ? 'Active' : 'Disabled' }}</el-tag>
+                      </el-descriptions-item>
+                      <el-descriptions-item label="Created">{{ formatDate(website.created_at) }}</el-descriptions-item>
+                    </el-descriptions>
+                  </el-card>
 
-              <el-card class="settings-card" shadow="hover">
-                <template #header>
-                  <div class="card-header">
-                    <span>Display Rules</span>
-                  </div>
-                </template>
-                <el-form label-position="top" :model="displaySettings">
-                  <el-form-item label="Display Duration (seconds)">
-                    <el-input-number v-model="displaySettings.display_for" :min="1" :max="60" style="width: 100%" />
-                    <div class="form-help">How long each notification displays</div>
-                  </el-form-item>
-                  <el-form-item label="Max Notifications">
-                    <el-input-number v-model="displaySettings.display_last" :min="1" :max="50" style="width: 100%" />
-                    <div class="form-help">Maximum number of notifications to show</div>
-                  </el-form-item>
-                  <el-form-item label="Display From Last">
-                    <el-row :gutter="10">
-                      <el-col :span="8">
-                        <el-input-number v-model="displaySettings.display_from_days" :min="0" :max="365" placeholder="Days" style="width: 100%" />
-                      </el-col>
-                      <el-col :span="8">
-                        <el-input-number v-model="displaySettings.display_from_hours" :min="0" :max="23" placeholder="Hours" style="width: 100%" />
-                      </el-col>
-                      <el-col :span="8">
-                        <el-input-number v-model="displaySettings.display_from_minutes" :min="0" :max="59" placeholder="Minutes" style="width: 100%" />
-                      </el-col>
-                    </el-row>
-                    <div class="form-help">Show notifications from the last X days/hours/minutes</div>
-                  </el-form-item>
-                  <el-form-item label="Loop Notifications">
-                    <el-switch v-model="displaySettings.loop" />
-                    <div class="form-help">Loop notifications continuously</div>
-                  </el-form-item>
-                  <el-form-item label="Open Links in New Tab">
-                    <el-switch v-model="displaySettings.link_open" />
-                  </el-form-item>
-                  <el-form-item label="Show For">
-                    <el-select v-model="displaySettings.show_on_display" style="width: 100%">
-                      <el-option label="Always" value="always" />
-                      <el-option label="Logged Out Users" value="logged_out_user" />
-                      <el-option label="Logged In Users" value="logged_in_user" />
-                    </el-select>
-                  </el-form-item>
-                  <el-form-item label="Show Close Button">
-                    <el-switch v-model="displaySettings.close_button" />
-                  </el-form-item>
-                  <el-form-item label="Hide on Mobile">
-                    <el-switch v-model="displaySettings.hide_on_mobile" />
-                  </el-form-item>
-                  <el-form-item>
-                    <el-button type="primary" :loading="savingDisplaySettings" @click="saveDisplaySettings">Save Display Settings</el-button>
-                  </el-form-item>
-                </el-form>
-              </el-card>
+                  <el-card class="danger-card" shadow="hover" style="margin-top: 24px;">
+                    <template #header>
+                      <div class="card-header">
+                        <span style="color: var(--el-color-danger); font-weight: 600;">Danger Zone</span>
+                      </div>
+                    </template>
+                    <p style="margin-bottom: 15px; color: var(--el-text-color-secondary); font-size: 14px;">
+                      Once you delete a site, there is no going back. Please be certain.
+                    </p>
+                    <el-button type="danger" @click="deleteSite">Delete Site</el-button>
+                  </el-card>
+                </el-tab-pane>
 
-              <el-card class="settings-card" shadow="hover">
-                <template #header>
-                  <div class="card-header">
-                    <span>Theme Settings</span>
-                  </div>
-                </template>
-                <el-form label-position="top" :model="themeSettings">
-                  <el-form-item label="Theme">
-                    <el-select v-model="themeSettings.theme" style="width: 100%">
-                      <el-option label="Light" value="light" />
-                      <el-option label="Dark" value="dark" />
-                    </el-select>
-                    <div class="form-help">Choose light or dark theme</div>
-                  </el-form-item>
-                  <el-form-item label="Image Shape">
-                    <el-select v-model="themeSettings.image_shape" style="width: 100%">
-                      <el-option label="Rounded" value="rounded" />
-                      <el-option label="Square" value="square" />
-                      <el-option label="Circle" value="circle" />
-                    </el-select>
-                    <div class="form-help">Shape of the emoji/icon</div>
-                  </el-form-item>
-                  <el-form-item label="Widget Position">
-                    <el-select v-model="themeSettings.widget_position" style="width: 100%">
-                      <el-option label="Bottom Left" value="bottom-left" />
-                      <el-option label="Bottom Right" value="bottom-right" />
-                      <el-option label="Top Left" value="top-left" />
-                      <el-option label="Top Right" value="top-right" />
-                    </el-select>
-                    <div class="form-help">Position of the widget on screen</div>
-                  </el-form-item>
-                  <el-form-item label="Background Color">
-                    <el-color-picker v-model="themeSettings.background_color" />
-                    <div class="form-help">Widget background color</div>
-                  </el-form-item>
-                  <el-form-item label="Text Color">
-                    <el-color-picker v-model="themeSettings.text_color" />
-                    <div class="form-help">Widget text color</div>
-                  </el-form-item>
-                  <el-form-item label="Accent Color">
-                    <el-color-picker v-model="themeSettings.accent_color" />
-                    <div class="form-help">Accent color for highlights</div>
-                  </el-form-item>
-                  <el-form-item>
-                    <el-button type="primary" :loading="savingThemeSettings" @click="saveThemeSettings">Save Theme Settings</el-button>
-                  </el-form-item>
-                </el-form>
-              </el-card>
+                <!-- Display Rules Tab -->
+                <el-tab-pane label="Display Rules" name="display">
+                  <el-card class="settings-card" shadow="hover">
+                    <el-form label-position="top" :model="displaySettings">
+                      <el-form-item label="Display Duration (seconds)">
+                        <el-input-number v-model="displaySettings.display_for" :min="1" :max="60" style="width: 100%" />
+                        <div class="form-help">How long each notification displays</div>
+                      </el-form-item>
+                      <el-form-item label="Max Notifications">
+                        <el-input-number v-model="displaySettings.display_last" :min="1" :max="50" style="width: 100%" />
+                        <div class="form-help">Maximum number of notifications to show</div>
+                      </el-form-item>
+                      <el-form-item label="Display From Last">
+                        <el-row :gutter="10">
+                          <el-col :span="8">
+                            <el-input-number v-model="displaySettings.display_from_days" :min="0" :max="365" placeholder="Days" style="width: 100%" />
+                          </el-col>
+                          <el-col :span="8">
+                            <el-input-number v-model="displaySettings.display_from_hours" :min="0" :max="23" placeholder="Hours" style="width: 100%" />
+                          </el-col>
+                          <el-col :span="8">
+                            <el-input-number v-model="displaySettings.display_from_minutes" :min="0" :max="59" placeholder="Minutes" style="width: 100%" />
+                          </el-col>
+                        </el-row>
+                        <div class="form-help">Show notifications from the last X days/hours/minutes</div>
+                      </el-form-item>
+                      <el-form-item label="Loop Notifications">
+                        <el-switch v-model="displaySettings.loop" />
+                        <div class="form-help">Loop notifications continuously</div>
+                      </el-form-item>
+                      <el-form-item label="Open Links in New Tab">
+                        <el-switch v-model="displaySettings.link_open" />
+                      </el-form-item>
+                      <el-form-item label="Show For">
+                        <el-select v-model="displaySettings.show_on_display" style="width: 100%">
+                          <el-option label="Always" value="always" />
+                          <el-option label="Logged Out Users" value="logged_out_user" />
+                          <el-option label="Logged In Users" value="logged_in_user" />
+                        </el-select>
+                      </el-form-item>
+                      <el-form-item label="Show Close Button">
+                        <el-switch v-model="displaySettings.close_button" />
+                      </el-form-item>
+                      <el-form-item label="Hide on Mobile">
+                        <el-switch v-model="displaySettings.hide_on_mobile" />
+                      </el-form-item>
+                      <el-form-item>
+                        <el-button type="primary" :loading="savingDisplaySettings" @click="saveDisplaySettings">Save Display Settings</el-button>
+                      </el-form-item>
+                    </el-form>
+                  </el-card>
+                </el-tab-pane>
 
-              <el-card class="danger-card" shadow="hover">
-                <template #header>
-                  <div class="card-header">
-                    <span>Danger Zone</span>
-                  </div>
-                </template>
-                <el-button type="danger" @click="deleteSite">Delete Site</el-button>
-              </el-card>
+                <!-- Theme Settings Tab -->
+                <el-tab-pane label="Theme Settings" name="theme">
+                  <el-card class="settings-card" shadow="hover">
+                    <el-form label-position="top" :model="themeSettings">
+                      <el-form-item label="Theme">
+                        <el-select v-model="themeSettings.theme" style="width: 100%">
+                          <el-option label="Light" value="light" />
+                          <el-option label="Dark" value="dark" />
+                        </el-select>
+                        <div class="form-help">Choose light or dark theme</div>
+                      </el-form-item>
+                      <el-form-item label="Image Shape">
+                        <el-select v-model="themeSettings.image_shape" style="width: 100%">
+                          <el-option label="Rounded" value="rounded" />
+                          <el-option label="Square" value="square" />
+                          <el-option label="Circle" value="circle" />
+                        </el-select>
+                        <div class="form-help">Shape of the emoji/icon</div>
+                      </el-form-item>
+                      <el-form-item label="Widget Position">
+                        <el-select v-model="themeSettings.widget_position" style="width: 100%">
+                          <el-option label="Bottom Left" value="bottom-left" />
+                          <el-option label="Bottom Right" value="bottom-right" />
+                          <el-option label="Top Left" value="top-left" />
+                          <el-option label="Top Right" value="top-right" />
+                        </el-select>
+                        <div class="form-help">Position of the widget on screen</div>
+                      </el-form-item>
+                      <el-form-item label="Background Color">
+                        <el-color-picker v-model="themeSettings.background_color" />
+                        <div class="form-help">Widget background color</div>
+                      </el-form-item>
+                      <el-form-item label="Text Color">
+                        <el-color-picker v-model="themeSettings.text_color" />
+                        <div class="form-help">Widget text color</div>
+                      </el-form-item>
+                      <el-form-item label="Accent Color">
+                        <el-color-picker v-model="themeSettings.accent_color" />
+                        <div class="form-help">Accent color for highlights</div>
+                      </el-form-item>
+                      <el-form-item>
+                        <el-button type="primary" :loading="savingThemeSettings" @click="saveThemeSettings">Save Theme Settings</el-button>
+                      </el-form-item>
+                    </el-form>
+                  </el-card>
+                </el-tab-pane>
+              </el-tabs>
             </div>
           </el-tab-pane>
         </el-tabs>
@@ -612,6 +616,7 @@ export default {
       activeTab: this.$route.params.tab || 'overview',
       notificationTab: 'auto',
       sourceTab: 'woocommerce',
+      settingsTab: 'general',
       copiedWebhook: false,
       copiedWooCommerce: false,
       copiedStripe: false,
