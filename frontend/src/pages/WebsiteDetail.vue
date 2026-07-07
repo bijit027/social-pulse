@@ -540,16 +540,7 @@
                         <el-color-picker v-model="themeSettings.accent_color" />
                         <div class="form-help">Accent color for highlights</div>
                       </el-form-item>
-                      <el-form-item label="Custom CSS">
-                        <el-input
-                          v-model="themeSettings.custom_css"
-                          type="textarea"
-                          :rows="6"
-                          placeholder=".sp-widget-container { border: 1px solid red; }"
-                          style="font-family: monospace;"
-                        />
-                        <div class="form-help">Write custom CSS to override widget styles. Use exactly how NotificationX does it.</div>
-                      </el-form-item>
+
                       <el-form-item>
                         <el-button type="primary" :loading="savingThemeSettings" @click="saveThemeSettings">Save Theme Settings</el-button>
                       </el-form-item>
@@ -557,6 +548,79 @@
                   </el-card>
                 </el-tab-pane>
               </el-tabs>
+            </div>
+          </el-tab-pane>
+
+          <!-- Custom CSS Tab -->
+          <el-tab-pane label="Custom CSS" name="custom-css">
+            <div class="tab-content">
+              <div class="tab-header">
+                <h2>Custom CSS</h2>
+                <el-button type="primary" :loading="savingThemeSettings" @click="saveThemeSettings">Save Custom CSS</el-button>
+              </div>
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-card shadow="hover" class="settings-card">
+                    <template #header>
+                      <div class="card-header">
+                        <span>CSS Editor</span>
+                      </div>
+                    </template>
+                    <div v-if="selectedElementClass" class="inspector-panel">
+                      <div class="inspector-header">
+                        <strong>Inspector:</strong> <el-tag size="small">{{ selectedElementClass }}</el-tag>
+                        <el-button link type="primary" size="small" @click="selectedElementClass = ''">Close</el-button>
+                      </div>
+                      <el-row :gutter="10" class="inspector-controls">
+                        <el-col :span="6">
+                          <label>Border Width</label>
+                          <el-input-number v-model="inspectorSettings.borderWidth" :min="0" :max="20" size="small" style="width:100%" />
+                        </el-col>
+                        <el-col :span="6">
+                          <label>Border Color</label>
+                          <el-color-picker v-model="inspectorSettings.borderColor" size="small" />
+                        </el-col>
+                        <el-col :span="6">
+                          <label>Radius (px)</label>
+                          <el-input-number v-model="inspectorSettings.borderRadius" :min="0" :max="100" size="small" style="width:100%" />
+                        </el-col>
+                        <el-col :span="6">
+                          <label>Background</label>
+                          <el-color-picker v-model="inspectorSettings.backgroundColor" size="small" />
+                        </el-col>
+                      </el-row>
+                      <el-button type="primary" size="small" @click="applyVisualStyles" class="apply-btn">Add to Editor</el-button>
+                    </div>
+
+                    <el-input
+                      v-model="themeSettings.custom_css"
+                      type="textarea"
+                      :rows="12"
+                      placeholder=".sp-notification-box { border: 1px solid red; }"
+                      style="font-family: monospace;"
+                    />
+                    <div class="form-help" style="margin-top: 10px;">Click elements in the Live Preview to visually generate CSS for them!</div>
+                  </el-card>
+                </el-col>
+                <el-col :span="12">
+                  <el-card shadow="hover" class="settings-card" style="height: 100%">
+                    <template #header>
+                      <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>Live Preview</span>
+                        <el-switch v-model="inspectorMode" active-text="Inspector Mode" />
+                      </div>
+                    </template>
+                    <div class="preview-wrapper">
+                      <iframe 
+                        class="live-preview-frame"
+                        :srcdoc="previewHtml" 
+                        frameborder="0"
+                        sandbox="allow-scripts allow-same-origin"
+                      ></iframe>
+                    </div>
+                  </el-card>
+                </el-col>
+              </el-row>
             </div>
           </el-tab-pane>
         </el-tabs>
@@ -681,6 +745,14 @@ export default {
         custom_css: ''
       },
       savingThemeSettings: false,
+      selectedElementClass: '',
+      inspectorMode: false,
+      inspectorSettings: {
+        borderWidth: 1,
+        borderColor: '#000000',
+        borderRadius: 0,
+        backgroundColor: ''
+      },
       newNotification: {
         type: 'purchase',
         message: '',
@@ -715,6 +787,80 @@ export default {
     stripeWebhookUrl() {
       if (!this.website) return ''
       return import.meta.env.VITE_API_URL.replace('/api', '') + '/api/webhook/stripe/' + this.website.pixel_id
+    },
+    previewHtml() {
+      const backgroundColor = this.themeSettings.background_color || '#ffffff'
+      const textColor = this.themeSettings.text_color || '#1a1a1a'
+      const accentColor = this.themeSettings.accent_color || '#FF6B35'
+      
+      const imageRadius = {
+        'rounded': '10px',
+        'square': '0px',
+        'circle': '50%'
+      }[this.themeSettings.image_shape || 'rounded']
+
+      const customCss = this.themeSettings.custom_css || ''
+
+      return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { 
+              margin: 0; 
+              padding: 20px; 
+              display: flex; 
+              justify-content: center; 
+              align-items: center; 
+              min-height: 250px;
+              background: transparent;
+            }
+            .sp-inspector-hover {
+              outline: 2px dashed #409eff !important;
+              outline-offset: 2px;
+              cursor: pointer !important;
+            }
+            ${customCss}
+          </style>
+        </head>
+        <body>
+          <div class="sp-notification-box" style="background:${backgroundColor};border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;font-family:-apple-system,BlinkMacSystemFont,sans-serif; max-width: 300px; width: 100%;">
+            <span class="sp-emoji" style="font-size:24px;border-radius:${imageRadius};">${this.newNotification.emoji || '🛒'}</span>
+            <div class="sp-content" style="flex:1;">
+              <div class="sp-title" style="font-size:13px;font-weight:600;color:${textColor};line-height:1.4;">John from New York just purchased Pro Plan</div>
+              <div class="sp-subtitle" style="font-size:11px;color:${textColor};opacity:0.7;margin-top:2px;">New York, USA</div>
+              <div class="sp-time" style="font-size:10px;color:${textColor};opacity:0.5;margin-top:1px;">2 minutes ago</div>
+            </div>
+            <button class="sp-close-btn" style="background:none;border:none;cursor:pointer;color:${textColor};font-size:18px;padding:0;line-height:1;">×</button>
+          </div>
+          ${this.inspectorMode ? `
+          <script>
+            document.addEventListener('mouseover', function(e) {
+              e.stopPropagation();
+              if (e.target && e.target.classList) {
+                e.target.classList.add('sp-inspector-hover');
+              }
+            });
+            document.addEventListener('mouseout', function(e) {
+              if (e.target && e.target.classList) {
+                e.target.classList.remove('sp-inspector-hover');
+              }
+            });
+            document.addEventListener('click', function(e) {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!e.target || !e.target.classList) return;
+              var className = Array.from(e.target.classList).find(function(c) { return c !== 'sp-inspector-hover'; });
+              var finalClass = className ? '.' + className : e.target.tagName.toLowerCase();
+              if (window.parent && window.parent.spInspectorClick) {
+                window.parent.spInspectorClick(finalClass);
+              }
+            });
+          </scr` + `ipt>
+          ` : ''}
+        </body>
+        </html>
+      `
     }
   },
   async mounted() {
@@ -726,6 +872,11 @@ export default {
     
     // Start listening to WebSocket events for real-time live visitors
     this.initEcho()
+    
+    // Direct function assignment for iframe to call
+    window.spInspectorClick = (className) => {
+      this.selectedElementClass = className
+    }
   },
   watch: {
     activeTab(newTab) {
@@ -972,6 +1123,36 @@ export default {
             this.analytics.active_visitors = e.active_visitors
           }
         })
+    },
+    applyVisualStyles() {
+      if (!this.selectedElementClass) return
+      
+      const cssRules = [
+        `${this.selectedElementClass} {`
+      ]
+      
+      if (this.inspectorSettings.borderColor && this.inspectorSettings.borderWidth > 0) {
+        cssRules.push(`    border: ${this.inspectorSettings.borderWidth}px solid ${this.inspectorSettings.borderColor} !important;`)
+      } else if (this.inspectorSettings.borderWidth === 0) {
+        cssRules.push(`    border: none !important;`)
+      }
+      
+      if (this.inspectorSettings.borderRadius !== null && this.inspectorSettings.borderRadius !== undefined) {
+        cssRules.push(`    border-radius: ${this.inspectorSettings.borderRadius}px !important;`)
+      }
+      
+      if (this.inspectorSettings.backgroundColor) {
+        cssRules.push(`    background-color: ${this.inspectorSettings.backgroundColor} !important;`)
+      }
+      
+      cssRules.push('}\n')
+      
+      const newBlock = cssRules.join('\n')
+      const comment = `\n/* Generated styles for ${this.selectedElementClass} */\n`
+      this.themeSettings.custom_css = (this.themeSettings.custom_css || '') + comment + newBlock
+      
+      ElMessage.success(`Added styles for ${this.selectedElementClass}`)
+      this.selectedElementClass = '' // Close panel after applying
     }
   },
   beforeUnmount() {
@@ -979,6 +1160,7 @@ export default {
     if (this.website && echo) {
       echo.leaveChannel(`website.${this.website.id}.analytics`)
     }
+    delete window.spInspectorClick
   }
 }
 </script>
@@ -1399,6 +1581,49 @@ export default {
 .danger-card {
   border-radius: 12px;
   margin-top: 1.5rem;
+}
+
+.inspector-panel {
+  background: var(--el-color-primary-light-9);
+  border: 1px solid var(--el-color-primary-light-7);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 15px;
+}
+
+.inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.inspector-controls label {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 4px;
+  color: var(--el-text-color-secondary);
+}
+
+.apply-btn {
+  margin-top: 12px;
+  width: 100%;
+}
+
+.preview-wrapper {
+  background: var(--el-bg-color-page);
+  border-radius: 8px;
+  border: 1px dashed var(--el-border-color-darker);
+  height: 350px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.live-preview-frame {
+  width: 100%;
+  height: 100%;
 }
 
 @media (max-width: 768px) {
