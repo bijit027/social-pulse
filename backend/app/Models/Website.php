@@ -44,4 +44,9 @@ class Website extends Model
     {
         return $this->hasMany(NotificationDisplay::class, 'website_id');
     }
+
+    public function leads()
+    {
+        return $this->hasMany(Lead::class);
+    }
 }

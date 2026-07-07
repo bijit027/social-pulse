@@ -24,7 +24,7 @@ class WidgetController extends Controller
             ->orderBy('display_order')
             ->orderBy('created_at', 'desc')
             ->limit($website->display_last ?? 20)
-            ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at', 'product_url', 'rating', 'button_text', 'source']);
+            ->get(['id', 'type', 'message', 'city', 'country', 'emoji', 'created_at', 'product_url', 'rating', 'button_text', 'source', 'metadata']);
 
         $displaySettings = [
             'display_for' => $website->display_for ?? 5,
@@ -68,6 +68,20 @@ class WidgetController extends Controller
             'visitor_ip'      => $request->ip(),
             'displayed_at'    => now(),
         ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function subscribe(Request $request, string $pixelId)
+    {
+        $request->validate([
+            'email' => 'required|email|max:255'
+        ]);
+
+        $website = Website::where('pixel_id', $pixelId)->first();
+        if (!$website) return response()->json(['message' => 'Website not found'], 404);
+
+        $website->leads()->firstOrCreate(['email' => $request->email]);
 
         return response()->json(['ok' => true]);
     }

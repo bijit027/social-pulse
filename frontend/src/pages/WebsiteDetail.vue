@@ -164,6 +164,26 @@
             </div>
           </el-tab-pane>
 
+          <!-- Leads Tab -->
+          <el-tab-pane label="Leads" name="leads">
+            <div class="tab-content">
+              <div class="tab-header">
+                <h2>Leads</h2>
+                <p>Email addresses collected from your subscription widgets</p>
+              </div>
+              <el-card shadow="never">
+                <el-table :data="leads" style="width: 100%" v-loading="loadingLeads">
+                  <el-table-column prop="email" label="Email Address" />
+                  <el-table-column prop="created_at" label="Subscribed On">
+                    <template #default="scope">
+                      {{ new Date(scope.row.created_at).toLocaleString() }}
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </el-card>
+            </div>
+          </el-tab-pane>
+
           <!-- Sources Tab -->
           <el-tab-pane label="Sources" name="sources">
             <div class="tab-content">
@@ -635,28 +655,61 @@
             <el-option label="Signup" value="signup" />
             <el-option label="Review" value="review" />
             <el-option label="Top Banner" value="banner" />
+            <el-option label="Page Analytics" value="page_analytics" />
+            <el-option label="GDPR Cookie Consent" value="gdpr" />
+            <el-option label="Email Subscription" value="email_subscription" />
+            <el-option label="Video" value="video" />
+            <el-option label="Custom Notification" value="custom" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="Base Count (Optional)" v-if="newNotification.type === 'page_analytics'">
+          <el-input v-model="newNotification.metadata.base_count" type="number" placeholder="e.g. 50" />
+        </el-form-item>
+        <el-form-item label="Accept Button Text" v-if="newNotification.type === 'gdpr'">
+          <el-input v-model="newNotification.metadata.accept_button_text" type="text" placeholder="Accept" />
+        </el-form-item>
+        <el-form-item label="Decline Button Text" v-if="newNotification.type === 'gdpr'">
+          <el-input v-model="newNotification.metadata.decline_button_text" type="text" placeholder="Decline" />
+        </el-form-item>
+        <el-form-item label="Privacy Policy URL" v-if="newNotification.type === 'gdpr'">
+          <el-input v-model="newNotification.metadata.policy_url" type="url" placeholder="https://example.com/privacy" />
+        </el-form-item>
+        <el-form-item label="Form Placeholder text" v-if="newNotification.type === 'email_subscription'">
+          <el-input v-model="newNotification.metadata.placeholder_text" type="text" placeholder="Enter your email address" />
+        </el-form-item>
+        <el-form-item label="Submit Button Text" v-if="newNotification.type === 'email_subscription'">
+          <el-input v-model="newNotification.metadata.submit_button_text" type="text" placeholder="Subscribe" />
+        </el-form-item>
+        <el-form-item label="Video URL (YouTube/Vimeo)" v-if="newNotification.type === 'video'">
+          <el-input v-model="newNotification.product_url" type="url" placeholder="https://www.youtube.com/watch?v=..." />
+        </el-form-item>
+        <el-form-item label="Image Emoji/URL" v-if="newNotification.type === 'custom'">
+          <el-input v-model="newNotification.emoji" type="text" placeholder="URL or Emoji" />
         </el-form-item>
         <el-form-item label="Rating" v-if="newNotification.type === 'review'">
           <el-rate v-model="newNotification.rating" :max="5" />
         </el-form-item>
-        <el-form-item label="Button Text" v-if="newNotification.type === 'banner'">
+        <el-form-item label="Button Text" v-if="['banner', 'custom'].includes(newNotification.type)">
           <el-input v-model="newNotification.button_text" type="text" placeholder="e.g. Buy Now" />
         </el-form-item>
-        <el-form-item label="Link URL" v-if="newNotification.type === 'banner' || newNotification.type === 'purchase'">
+        <el-form-item label="Link URL" v-if="['banner', 'purchase', 'custom'].includes(newNotification.type)">
           <el-input v-model="newNotification.product_url" type="url" placeholder="https://example.com/product" />
         </el-form-item>
-        <el-form-item label="Message">
+        <el-form-item label="Message" v-if="newNotification.type !== 'video' && newNotification.type !== 'gdpr'">
           <el-input v-model="newNotification.message" type="text" required 
                      placeholder="e.g. John from New York just purchased Pro Plan" />
         </el-form-item>
-        <el-form-item label="City (optional)">
+        <el-form-item label="Message" v-if="newNotification.type === 'gdpr'">
+          <el-input v-model="newNotification.message" type="text" required 
+                     placeholder="We use cookies to improve your experience" />
+        </el-form-item>
+        <el-form-item label="City (optional)" v-if="['purchase', 'signup', 'review'].includes(newNotification.type)">
           <el-input v-model="newNotification.city" type="text" placeholder="New York" />
         </el-form-item>
-        <el-form-item label="Country (optional)" v-if="newNotification.type !== 'banner'">
+        <el-form-item label="Country (optional)" v-if="['purchase', 'signup', 'review'].includes(newNotification.type)">
           <el-input v-model="newNotification.country" type="text" placeholder="USA" />
         </el-form-item>
-        <el-form-item label="Emoji" v-if="newNotification.type !== 'banner'">
+        <el-form-item label="Emoji" v-if="['purchase', 'signup', 'review'].includes(newNotification.type)">
           <el-input v-model="newNotification.emoji" type="text" placeholder="🛒" />
         </el-form-item>
         <el-alert v-if="addError" :title="addError" type="error" :closable="false" style="margin-bottom: 1rem" />
@@ -761,8 +814,11 @@ export default {
         emoji: '🛒',
         rating: 5,
         button_text: '',
-        product_url: ''
-      }
+        product_url: '',
+        metadata: {}
+      },
+      leads: [],
+      loadingLeads: false
     }
   },
   computed: {
@@ -883,6 +939,9 @@ export default {
       if (newTab !== this.$route.params.tab) {
         this.$router.replace({ path: `/sites/${this.$route.params.id}/${newTab}`, query: this.$route.query })
       }
+      if (newTab === 'leads' && this.leads.length === 0) {
+        this.fetchLeads()
+      }
     },
     notificationTab(newVal) {
       this.$router.replace({ query: { ...this.$route.query, nTab: newVal } })
@@ -948,6 +1007,17 @@ export default {
         this.snippet = response.data.snippet
       } catch (err) {
         console.error('Failed to fetch snippet:', err)
+      }
+    },
+    async fetchLeads() {
+      this.loadingLeads = true
+      try {
+        const response = await api.get(`/websites/${this.$route.params.id}/leads`)
+        this.leads = response.data
+      } catch (err) {
+        console.error('Failed to fetch leads:', err)
+      } finally {
+        this.loadingLeads = false
       }
     },
     async handleAddNotification() {
@@ -1075,7 +1145,13 @@ export default {
       const tagMap = {
         purchase: 'success',
         signup: 'primary',
-        review: 'warning'
+        review: 'warning',
+        banner: 'danger',
+        page_analytics: 'info',
+        gdpr: 'warning',
+        email_subscription: 'primary',
+        video: 'danger',
+        custom: 'success'
       }
       return tagMap[type] || 'info'
     },

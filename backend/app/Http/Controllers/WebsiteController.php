@@ -113,4 +113,13 @@ class WebsiteController extends Controller
             'active_visitors'    => $activeVisitors,
         ]);
     }
+
+    public function leads(Website $website)
+    {
+        if ($website->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        return response()->json($website->leads()->orderBy('created_at', 'desc')->get());
+    }
 }

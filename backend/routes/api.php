@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 // Public widget endpoints
 Route::get('/widget/{pixelId}', [WidgetController::class, 'serve']);
 Route::post('/widget/{pixelId}/display', [WidgetController::class, 'trackDisplay']);
+Route::post('/widget/{pixelId}/subscribe', [WidgetController::class, 'subscribe']);
 
 // Public analytics endpoint (for widget click tracking)
 Route::post('/analytics/track', [AnalyticsController::class, 'track']);
@@ -49,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/websites/{website}/snippet', [WebsiteController::class, 'snippet']);
     Route::get('/websites/{website}/analytics', [WebsiteController::class, 'analytics']);
     Route::get('/websites/{website}/analytics/stats', [AnalyticsController::class, 'getStats']);
+    Route::get('/websites/{website}/leads', [WebsiteController::class, 'leads']);
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'getAll']);

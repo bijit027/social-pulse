@@ -9,7 +9,12 @@ class Notification extends Model
         'website_id', 'type', 'message',
         'city', 'country', 'emoji', 'product_url',
         'is_active', 'display_order', 'source',
-        'rating', 'button_text'
+        'rating', 'button_text', 'metadata'
+    ];
+
+    protected $casts = [
+        'is_active' => 'boolean',
+        'metadata' => 'array',
     ];
 
     public function website()
