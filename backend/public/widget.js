@@ -139,8 +139,12 @@
                            settings.close_button !== 'false' && 
                            settings.close_button !== 0 && 
                            settings.close_button !== '0';
+      var closeBtnStyle = n.type === 'banner' ? 
+        'background:none;border:none;cursor:pointer;color:' + textColor + ';font-size:18px;padding:0;line-height:1;' :
+        'position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;color:' + textColor + ';font-size:18px;padding:0;line-height:1;';
+
       var closeButton = showCloseButton ? 
-        '<button class="sp-close-btn" onclick="event.stopPropagation();this.closest(\'div\').parentElement.style.display=\'none\'" style="background:none;border:none;cursor:pointer;color:' + textColor + ';font-size:18px;padding:0;line-height:1;">\u00D7</button>' : '';
+        '<button class="sp-close-btn" onclick="event.stopPropagation();this.closest(\'div\').parentElement.style.display=\'none\'" style="' + closeBtnStyle + '">\u00D7</button>' : '';
 
       var hasProductUrl = n.product_url && n.product_url.length > 0;
       var cursorStyle = hasProductUrl ? 'cursor:pointer;' : '';
@@ -178,9 +182,9 @@
         }
 
         container.innerHTML =
-          '<div class="sp-notification-box" style="background:' + backgroundColor + ';border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;animation:sp-slide-in 0.3s ease;' + cursorStyle + '" data-notification-id="' + n.id + '">' +
+          '<div class="sp-notification-box" style="position:relative;background:' + backgroundColor + ';border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;animation:sp-slide-in 0.3s ease;' + cursorStyle + '" data-notification-id="' + n.id + '">' +
           '<span class="sp-emoji" style="font-size:24px;border-radius:' + emojiRadius + ';">' + (n.emoji || '\u{1F6D2}') + '</span>' +
-          '<div class="sp-content" style="flex:1;">' +
+          '<div class="sp-content" style="flex:1;padding-right:16px;">' +
           '<div class="sp-title" style="font-size:13px;font-weight:600;color:' + textColor + ';line-height:1.4;">' + n.message + '</div>' +
           reviewStars +
           (n.city ? '<div class="sp-subtitle" style="font-size:11px;color:' + textColor + ';opacity:0.7;margin-top:2px;">' + n.city + (n.country ? ', ' + n.country : '') + '</div>' : '') +

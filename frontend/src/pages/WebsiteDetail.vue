@@ -824,14 +824,14 @@ export default {
           </style>
         </head>
         <body>
-          <div class="sp-notification-box" style="background:${backgroundColor};border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;font-family:-apple-system,BlinkMacSystemFont,sans-serif; max-width: 300px; width: 100%;">
+          <div class="sp-notification-box" style="position:relative;background:${backgroundColor};border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;font-family:-apple-system,BlinkMacSystemFont,sans-serif; max-width: 300px; width: 100%;">
             <span class="sp-emoji" style="font-size:24px;border-radius:${imageRadius};">${this.newNotification.emoji || '🛒'}</span>
-            <div class="sp-content" style="flex:1;">
+            <div class="sp-content" style="flex:1;padding-right:16px;">
               <div class="sp-title" style="font-size:13px;font-weight:600;color:${textColor};line-height:1.4;">John from New York just purchased Pro Plan</div>
               <div class="sp-subtitle" style="font-size:11px;color:${textColor};opacity:0.7;margin-top:2px;">New York, USA</div>
               <div class="sp-time" style="font-size:10px;color:${textColor};opacity:0.5;margin-top:1px;">2 minutes ago</div>
             </div>
-            <button class="sp-close-btn" style="background:none;border:none;cursor:pointer;color:${textColor};font-size:18px;padding:0;line-height:1;">×</button>
+            <button class="sp-close-btn" style="position:absolute;top:8px;right:8px;background:none;border:none;cursor:pointer;color:${textColor};font-size:18px;padding:0;line-height:1;">×</button>
           </div>
           ${this.inspectorMode ? `
           <script>
