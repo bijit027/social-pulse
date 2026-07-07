@@ -10,7 +10,7 @@ class Website extends Model
         'user_id', 'name', 'domain', 'pixel_id', 'is_active',
         'display_for', 'display_last', 'display_from_days', 'display_from_hours', 'display_from_minutes',
         'loop', 'link_open', 'show_on_display', 'close_button', 'hide_on_mobile',
-        'theme', 'image_shape', 'widget_position', 'background_color', 'text_color', 'accent_color'
+        'theme', 'image_shape', 'widget_position', 'background_color', 'text_color', 'accent_color', 'custom_css'
     ];
 
     protected $casts = [

@@ -178,9 +178,9 @@
         }
 
         container.innerHTML =
-          '<div style="background:' + backgroundColor + ';border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;animation:sp-slide-in 0.3s ease;' + cursorStyle + '" data-notification-id="' + n.id + '">' +
-          '<span style="font-size:24px;border-radius:' + emojiRadius + ';">' + (n.emoji || '\u{1F6D2}') + '</span>' +
-          '<div style="flex:1;">' +
+          '<div class="sp-notification-box" style="background:' + backgroundColor + ';border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;animation:sp-slide-in 0.3s ease;' + cursorStyle + '" data-notification-id="' + n.id + '">' +
+          '<span class="sp-emoji" style="font-size:24px;border-radius:' + emojiRadius + ';">' + (n.emoji || '\u{1F6D2}') + '</span>' +
+          '<div class="sp-content" style="flex:1;">' +
           '<div style="font-size:13px;font-weight:600;color:' + textColor + ';line-height:1.4;">' + n.message + '</div>' +
           reviewStars +
           (n.city ? '<div style="font-size:11px;color:' + textColor + ';opacity:0.7;margin-top:2px;">' + n.city + (n.country ? ', ' + n.country : '') + '</div>' : '') +
@@ -238,6 +238,13 @@
     var style = document.createElement('style');
     style.textContent = '@keyframes sp-slide-in{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}';
     document.head.appendChild(style);
+
+    if (themeSettings.custom_css) {
+      var customCssStyle = document.createElement('style');
+      customCssStyle.id = 'sp-custom-css';
+      customCssStyle.textContent = themeSettings.custom_css;
+      document.head.appendChild(customCssStyle);
+    }
 
     setTimeout(show, 3000);
   }

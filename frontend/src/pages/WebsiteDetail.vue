@@ -540,6 +540,16 @@
                         <el-color-picker v-model="themeSettings.accent_color" />
                         <div class="form-help">Accent color for highlights</div>
                       </el-form-item>
+                      <el-form-item label="Custom CSS">
+                        <el-input
+                          v-model="themeSettings.custom_css"
+                          type="textarea"
+                          :rows="6"
+                          placeholder=".sp-widget-container { border: 1px solid red; }"
+                          style="font-family: monospace;"
+                        />
+                        <div class="form-help">Write custom CSS to override widget styles. Use exactly how NotificationX does it.</div>
+                      </el-form-item>
                       <el-form-item>
                         <el-button type="primary" :loading="savingThemeSettings" @click="saveThemeSettings">Save Theme Settings</el-button>
                       </el-form-item>
@@ -667,7 +677,8 @@ export default {
         widget_position: 'bottom-right',
         background_color: '#ffffff',
         text_color: '#1a1a1a',
-        accent_color: '#FF6B35'
+        accent_color: '#FF6B35',
+        custom_css: ''
       },
       savingThemeSettings: false,
       newNotification: {
@@ -755,6 +766,7 @@ export default {
         if (this.website.background_color !== undefined) this.themeSettings.background_color = this.website.background_color
         if (this.website.text_color !== undefined) this.themeSettings.text_color = this.website.text_color
         if (this.website.accent_color !== undefined) this.themeSettings.accent_color = this.website.accent_color
+        if (this.website.custom_css !== undefined) this.themeSettings.custom_css = this.website.custom_css
       } catch (err) {
         console.error('Failed to fetch website:', err)
       }
