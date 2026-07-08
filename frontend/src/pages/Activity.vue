@@ -59,7 +59,7 @@
             <div class="empty-state">
               <el-icon class="empty-icon"><Document /></el-icon>
               <h3>No activity found</h3>
-              <p>There are no recent events to display.</p>
+              <p>No recent events to show right now.</p>
             </div>
           </template>
         </el-table>
