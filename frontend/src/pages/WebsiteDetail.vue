@@ -168,11 +168,25 @@
           <el-tab-pane label="Leads" name="leads">
             <div class="tab-content">
               <div class="tab-header">
-                <h2>Leads</h2>
-                <p>Email addresses collected from your subscription widgets</p>
+                <div>
+                  <h2>Leads</h2>
+                  <p>Email addresses collected from your subscription widgets</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <el-tag type="info" size="large">{{ leads.length }} subscriber{{ leads.length !== 1 ? 's' : '' }}</el-tag>
+                  <el-button
+                    type="success"
+                    :disabled="leads.length === 0"
+                    @click="exportLeadsCsv"
+                  >
+                    ⬇ Export CSV
+                  </el-button>
+                </div>
               </div>
               <el-card shadow="never">
-                <el-table :data="leads" style="width: 100%" v-loading="loadingLeads">
+                <el-empty v-if="!loadingLeads && leads.length === 0" description="No leads yet. Add an Email Subscription widget to start collecting emails." />
+                <el-table v-else :data="leads" style="width: 100%" v-loading="loadingLeads">
+                  <el-table-column type="index" label="#" width="60" />
                   <el-table-column prop="email" label="Email Address" />
                   <el-table-column prop="created_at" label="Subscribed On">
                     <template #default="scope">
@@ -183,6 +197,7 @@
               </el-card>
             </div>
           </el-tab-pane>
+
 
           <!-- Sources Tab -->
           <el-tab-pane label="Sources" name="sources">
@@ -1019,6 +1034,30 @@ export default {
       } finally {
         this.loadingLeads = false
       }
+    },
+    exportLeadsCsv() {
+      if (this.leads.length === 0) return
+
+      const siteName = (this.website?.name || 'leads').replace(/\s+/g, '_')
+      const rows = [
+        ['#', 'Email Address', 'Subscribed On'],
+        ...this.leads.map((lead, i) => [
+          i + 1,
+          lead.email,
+          new Date(lead.created_at).toLocaleString()
+        ])
+      ]
+
+      const csvContent = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${siteName}_leads_${new Date().toISOString().slice(0,10)}.csv`
+      link.click()
+      URL.revokeObjectURL(url)
+
+      ElMessage.success(`Exported ${this.leads.length} lead${this.leads.length !== 1 ? 's' : ''} to CSV!`)
     },
     async handleAddNotification() {
       this.adding = true
